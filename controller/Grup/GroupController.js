@@ -466,6 +466,7 @@ const GrupController = {
           live: true,
           status: true,
           is_finished: true,
+          perjalananid: true, 
         },
       });
       if (liveProgress.length === 0) {
@@ -481,6 +482,7 @@ const GrupController = {
           live: progress.live,
           status: progress.status,
           is_finished: progress.is_finished,
+          perjalananid: progress.perjalananid,
         })),
       });
     } catch (err) {
