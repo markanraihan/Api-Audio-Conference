@@ -44,8 +44,12 @@ const exitProgress = async (progressid) => {
   return await ProgressRepository.exitProgress(progressid);
 };
 
-const getUserProgressHistory = async (userId) => {
+const getUserProgressHistoryByToken = async (token) => {
   try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const userId = decoded.user.id;
+
     const userProgress = await ProgressRepository.getUserProgressHistory(userId);
     return userProgress;
   } catch (err) {
@@ -87,7 +91,7 @@ module.exports = {
   createProgress,
   getLiveProgress,
   exitProgress,
-  getUserProgressHistory,
+  getUserProgressHistoryByToken,
   getAllGrupByUserId,
   getAllGrupByToken,
 };

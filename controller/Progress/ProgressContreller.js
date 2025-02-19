@@ -41,11 +41,11 @@ const getLiveProgress = async (req, res) => {
   }
 };
 
-const getUserProgressHistory = async (req, res) => {
-  const { userId } = req.params;
+const getUserProgressHistoryByToken = async (req, res) => {
+  const { token } = req.headers;
 
   try {
-    const result = await ProgressServices.getUserProgressHistory(userId);
+    const result = await ProgressServices.getUserProgressHistoryByToken(token);
 
     if (result.length === 0) {
       return res.status(404).json({ msg: "Tidak ada riwayat perjalanan untuk user ini." });
@@ -124,7 +124,7 @@ module.exports = {
   createProgress,
   getLiveProgress,
   exitProgress,
-  getUserProgressHistory,
+  getUserProgressHistoryByToken,
   getAllGrupByUserId,
   getAllGrupByToken,
 };

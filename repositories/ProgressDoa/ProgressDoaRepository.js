@@ -49,6 +49,29 @@ const ProgressDoaRepository = {
   async getAllProgressDoa() {
     return await prisma.progress_Doa.findMany();
   },
+
+  async getProgressDoaByUserIdAndGroupId(userId, perjalananid, grupid) {
+    return await prisma.progress_Doa.findMany({
+      where: {
+        userId: userId,
+        perjalananid: perjalananid,
+        grupid: grupid,
+      },
+      include: {
+        doa: true,
+        user: {
+          select: {
+            nama: true,
+          },
+        },
+        perjalanan: {
+          select: {
+            nama_perjalanan: true,
+          },
+        },
+      },
+    });
+  },
 };
 
 module.exports = ProgressDoaRepository;
