@@ -188,17 +188,17 @@ const GrupController = {
   exitGrup: async (req, res) => {
     const { grupid } = req.body;
     const { userId } = req.query;
-
+  
     try {
       // Ambil token dari headers
       const { token } = req.headers;
       const responseJWT = jwt.verify(token, process.env.JWT_SECRET);
-
+  
       // Pastikan token valid dan memiliki informasi user yang sesuai
       if (!responseJWT || responseJWT.user.id !== userId) {
         return res.status(403).json({ status: "error", message: "Akses tidak diizinkan." });
       }
-
+  
       // Cek apakah user tergabung dalam grup
       const userInGroup = await prisma.peserta_Grup.findFirst({
         where: {
@@ -206,48 +206,39 @@ const GrupController = {
           userId,
         },
       });
-
+  
       if (!userInGroup) {
         return res.status(400).json({
           status: "error",
           message: "Anda belum tergabung dalam grup ini.",
         });
       }
-
+  
       // Hapus data terkait user dari tabel peserta_Grup
       await prisma.peserta_Grup.delete({
         where: { peserta_grupid: userInGroup.peserta_grupid },
       });
-
-      // Hapus data progress perjalanan jika ada yang terkait dengan user dan grup
-      await prisma.progress_perjalanan.deleteMany({
-        where: {
-          userId,
-          progress: {
-            grupid,
-          },
-        },
-      });
-
+  
       // Hapus data progress grup jika tidak ada peserta yang tersisa
       const remainingParticipants = await prisma.peserta_Grup.count({
         where: { grupid },
       });
-
+  
       if (remainingParticipants === 0) {
+        // Hapus progress yang terkait dengan grup
         await prisma.progress.deleteMany({
           where: { grupid },
         });
-
+  
         // Hapus grup jika kosong
         await prisma.grup.delete({
           where: { grupid },
         });
       }
-
+  
       res.json({
         status: "success",
-        message: "Anda telah keluar dari grup dan data terkait telah dihapus.",
+        message: "Anda telah keluar dari grup.",
       });
     } catch (err) {
       console.error(err.message);

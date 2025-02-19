@@ -8,5 +8,6 @@ router.put("/", ProgressControllers.exitProgress);
 router.get("/", ProgressControllers.getLiveProgress);
 router.get("/user-progress/:userId", ProgressControllers.getUserProgressHistory); // Endpoint untuk riwayat user
 router.get("/user-grup/:userId", ProgressControllers.getAllGrupByUserId); // untuk history seluruh grup yang di lalui oleh si user
+router.get("/riwayat-grup", ProgressControllers.getAllGrupByToken);
 
 module.exports = router 

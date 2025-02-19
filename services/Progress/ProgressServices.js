@@ -1,5 +1,6 @@
 // ProgressServices.js
 const ProgressRepository = require("../../repositories/Progress/ProgressRepository");
+const jwt = require("jsonwebtoken");
 
 const createProgress = async (grupid, perjalananid) => {
   // Validasi grup
@@ -63,6 +64,21 @@ const getAllGrupByUserId = async (userId) => {
   }
 };
 
+const getAllGrupByToken = async (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const userId = decoded.user.id;
+
+    const grups = await ProgressRepository.getAllGrupByUserId(userId);
+
+    return grups;
+  } catch (err) {
+    console.error("Error in getAllGrupByToken Service:", err.message);
+    throw new Error(err.message);
+  }
+};
+
 const getLiveProgress = async () => {
   return await ProgressRepository.getLiveProgress();
 };
@@ -73,4 +89,5 @@ module.exports = {
   exitProgress,
   getUserProgressHistory,
   getAllGrupByUserId,
+  getAllGrupByToken,
 };

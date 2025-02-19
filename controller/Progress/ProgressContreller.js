@@ -107,10 +107,24 @@ const getAllGrupByUserId = async (req, res) => {
   }
 };
 
+const getAllGrupByToken = async (req, res) => {
+  try {
+    const { token } = req.headers;
+
+    const grups = await ProgressServices.getAllGrupByToken(token);
+
+    res.status(200).json({ msg: "Grup ditemukan", data: grups });
+  } catch (err) {
+    console.error("Error in getAllGrupByToken Controller:", err.message);
+    res.status(500).send({ msg: "Server error", error: err.message });
+  }
+};
+
 module.exports = {
   createProgress,
   getLiveProgress,
   exitProgress,
   getUserProgressHistory,
   getAllGrupByUserId,
+  getAllGrupByToken,
 };
