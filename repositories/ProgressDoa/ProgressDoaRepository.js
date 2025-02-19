@@ -51,14 +51,19 @@ const ProgressDoaRepository = {
   },
 
   async getProgressDoaByUserIdAndGroupId(userId, perjalananid, grupid) {
-    return await prisma.progress_Doa.findMany({
+    const result = await prisma.progress_Doa.findMany({
       where: {
         userId: userId,
         perjalananid: perjalananid,
         grupid: grupid,
       },
       include: {
-        doa: true,
+        doa: {
+          select: {
+            judul_doa: true,
+            doa_id: true,
+          },
+        },
         user: {
           select: {
             nama: true,
@@ -71,7 +76,32 @@ const ProgressDoaRepository = {
         },
       },
     });
+
+    // Format data sesuai kebutuhan
+    if (result.length > 0) {
+      const formattedData = {
+        name: result[0].user.nama,
+        userId: userId,
+        nama_perjalanan: result[0].perjalanan.nama_perjalanan,
+        perjalananid: perjalananid,
+        grupid: grupid,
+        data: result.map((item) => ({
+          progress_doaid: item.progress_doaid,
+          judul_doa: item.doa.judul_doa,
+          doaid: item.doa.doa_id,
+          doa_mulai: item.doa_mulai,
+          doa_selesai: item.doa_selesai,
+          durasi_doa: item.durasi_doa,
+          cek_doa: item.cek_doa,
+        })),
+      };
+
+      return formattedData;
+    }
+
+    return null;
   },
+
 };
 
 module.exports = ProgressDoaRepository;

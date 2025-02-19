@@ -47,15 +47,20 @@ const ProgressDoaController = {
       const { token } = req.headers;
       const { perjalananid, grupid } = req.params;
 
-      const progressDoaList = await ProgressDoaService.getProgressDoaByUserIdAndGroupId(token, perjalananid, grupid);
+      const progressDoaData = await ProgressDoaService.getProgressDoaByUserIdAndGroupId(token, perjalananid, grupid);
 
-      if (progressDoaList.length === 0) {
+      if (!progressDoaData) {
         return res.status(404).json({ message: "Tidak ada riwayat doa untuk user ini." });
       }
 
       res.status(200).json({
         message: "Riwayat doa ditemukan",
-        data: progressDoaList,
+        name: progressDoaData.name,
+        userId: progressDoaData.userId,
+        nama_perjalanan: progressDoaData.nama_perjalanan,
+        perjalananid: progressDoaData.perjalananid,
+        grupid: progressDoaData.grupid,
+        data: progressDoaData.data,
       });
     } catch (error) {
       res.status(500).json({ error: error.message });

@@ -25,6 +25,7 @@ const ProgressDoaService = {
 
     return await ProgressDoaRepository.getProgressDoaByUserIdAndGroupId(userId, perjalananid, grupid);
   },
+  
 };
 
 module.exports = ProgressDoaService;
