@@ -2,7 +2,22 @@
 const prisma = require("../../utils/Prisma");
 
 const ProgressDoaRepository = {
+  // async createProgressDoa(data) {
+  //   return await prisma.progress_Doa.create({ data });
+  // },
+
   async createProgressDoa(data) {
+    const existing = await prisma.progress_Doa.findFirst({
+      where: {
+        progressid: data.progressid,
+        doaid: data.doaid,
+      },
+    });
+
+    if (existing) {
+      throw new Error("Progress doa sudah ada!");
+    }
+
     return await prisma.progress_Doa.create({ data });
   },
 
@@ -17,7 +32,9 @@ const ProgressDoaRepository = {
     }
 
     if (existingProgressDoa.cek_doa) {
-      throw new Error("Progress doa sudah selesai dan tidak dapat diperbarui lagi.");
+      throw new Error(
+        "Progress doa sudah selesai dan tidak dapat diperbarui lagi."
+      );
     }
 
     // Set waktu selesai
@@ -46,14 +63,23 @@ const ProgressDoaRepository = {
     });
   },
 
+  async getProgressDoaByProgressId(progressId) {
+    return await prisma.progress_Doa.findMany({
+      where: { progressid: progressId },
+      select: {
+        doaid: true,
+        durasi_doa: true,
+      },
+    });
+  },
+
   async getAllProgressDoa() {
     return await prisma.progress_Doa.findMany();
   },
 
-  async getProgressDoaByUserIdAndGroupId(userId, perjalananid, grupid) {
+  async getProgressDoaByPerjalananAndGroupId(perjalananid, grupid) {
     const result = await prisma.progress_Doa.findMany({
       where: {
-        userId: userId,
         perjalananid: perjalananid,
         grupid: grupid,
       },
@@ -62,11 +88,6 @@ const ProgressDoaRepository = {
           select: {
             judul_doa: true,
             doa_id: true,
-          },
-        },
-        user: {
-          select: {
-            nama: true,
           },
         },
         perjalanan: {
@@ -80,8 +101,6 @@ const ProgressDoaRepository = {
     // Format data sesuai kebutuhan
     if (result.length > 0) {
       const formattedData = {
-        name: result[0].user.nama,
-        userId: userId,
         nama_perjalanan: result[0].perjalanan.nama_perjalanan,
         perjalananid: perjalananid,
         grupid: grupid,
@@ -102,6 +121,67 @@ const ProgressDoaRepository = {
     return null;
   },
 
+  // Mendapatkan grupid berdasarkan userId
+  async getUserProgressByUserId(userId) {
+    return await prisma.progress_perjalanan.findFirst({
+      where: { userId },
+      select: {
+        grupid: true,
+      },
+    });
+  },
+
+  async getStatusDoa(perjalananid, grupid, userId) {
+    const progressList = await prisma.progress_perjalanan.findMany({
+      where: {
+        perjalananid: perjalananid,
+        grupid: grupid,
+        userId: userId,
+      },
+      select: {
+        progressid: true,
+      },
+    });
+
+    if (progressList.length === 0) {
+      return { message: "Riwayat doa tidak ditemukan" };
+    }
+
+    const progressIds = progressList.map((p) => p.progressid);
+
+    const statusDoa = await prisma.progress_Doa.findMany({
+      where: { progressid: { in: progressIds } },
+      select: {
+        doaid: true,
+        durasi_doa: true,
+        cek_doa: true,
+        doa: {
+          select: {
+            judul_doa: true,
+            doa_urut: true,
+          },
+        },
+      },
+      orderBy: {
+        doa: {
+          doa_urut: "asc",
+        },
+      },
+    });
+
+    return statusDoa.map((doa) => ({
+      doaid: doa.doaid,
+      judul_doa: doa.doa.judul_doa,
+      durasi_doa: doa.durasi_doa,
+      cek_doa: doa.cek_doa,
+    }));
+
+    if (statusDoa.length === 0) {
+      return { message: "Riwayat doa tidak ditemukan" };
+    }
+
+    return statusDoa;
+  },
 };
 
 module.exports = ProgressDoaRepository;

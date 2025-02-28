@@ -11,7 +11,7 @@ const getAllDoa = async () => {
 
 const getDoaById = async (doaId) => {
   return await prisma.doa.findUnique({
-    where: { doaid: doaId }, 
+    where: { doaid: doaId },
     include: {
       ayat: true,
     },
@@ -27,6 +27,21 @@ const getDoaByPerjalananId = async (perjalananId) => {
   });
 };
 
+const getStatusDoaByPerjalananId = async (perjalananId) => {
+  return await prisma.doa.findMany({
+    where: { perjalananid: perjalananId },
+    select: {
+      doaid: true,
+      judul_doa: true,
+      perjalananid: true,
+      doa_urut: true,
+    },
+    orderBy: {
+      doa_urut: 'asc',
+    },
+  });
+};
+
 const createDoa = async ({ judul_doa, perjalananid, link_audio, ayat }) => {
   return await prisma.doa.create({
     data: {
@@ -34,7 +49,7 @@ const createDoa = async ({ judul_doa, perjalananid, link_audio, ayat }) => {
       perjalananid,
       link_audio,
       ayat: {
-        create: ayat, 
+        create: ayat,
       },
     },
     include: {
@@ -80,6 +95,7 @@ module.exports = {
   getAllDoa,
   getDoaById,
   getDoaByPerjalananId,
+  getStatusDoaByPerjalananId,
   createDoa,
   updateDoa,
   deleteDoa,

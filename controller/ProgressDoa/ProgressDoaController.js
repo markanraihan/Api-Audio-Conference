@@ -42,12 +42,11 @@ const ProgressDoaController = {
     }
   },
 
-  async getProgressDoaByUserIdAndGroupId(req, res) {
+  async getProgressDoaByPerjalananAndGroupId(req, res) {
     try {
-      const { token } = req.headers;
       const { perjalananid, grupid } = req.params;
 
-      const progressDoaData = await ProgressDoaService.getProgressDoaByUserIdAndGroupId(token, perjalananid, grupid);
+      const progressDoaData = await ProgressDoaService.getProgressDoaByPerjalananAndGroupId(perjalananid, grupid);
 
       if (!progressDoaData) {
         return res.status(404).json({ message: "Tidak ada riwayat doa untuk user ini." });
@@ -56,7 +55,6 @@ const ProgressDoaController = {
       res.status(200).json({
         message: "Riwayat doa ditemukan",
         name: progressDoaData.name,
-        userId: progressDoaData.userId,
         nama_perjalanan: progressDoaData.nama_perjalanan,
         perjalananid: progressDoaData.perjalananid,
         grupid: progressDoaData.grupid,
@@ -66,6 +64,21 @@ const ProgressDoaController = {
       res.status(500).json({ error: error.message });
     }
   },
+
+  async getStatusDoa(req, res) {
+    try {
+      const { perjalananid, grupid } = req.params;
+        const { token } = req.headers;
+
+        const statusDoa = await ProgressDoaService.getStatusDoa(perjalananid, grupid, token);
+
+        res.status(200).json(statusDoa);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+
 
 };
 

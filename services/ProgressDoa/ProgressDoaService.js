@@ -1,6 +1,6 @@
 // ProgressDoaService.js
 const ProgressDoaRepository = require("../../repositories/ProgressDoa/ProgressDoaRepository");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const ProgressDoaService = {
   async createProgressDoa(data) {
@@ -19,13 +19,28 @@ const ProgressDoaService = {
     return await ProgressDoaRepository.getAllProgressDoa();
   },
 
-  async getProgressDoaByUserIdAndGroupId(token, perjalananid, grupid) {
+  async getProgressDoaByPerjalananAndGroupId(perjalananid, grupid) {
+    return await ProgressDoaRepository.getProgressDoaByPerjalananAndGroupId(
+      perjalananid,
+      grupid
+    );
+  },
+
+  async getUserProgressByToken(token) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.user.id;
-
-    return await ProgressDoaRepository.getProgressDoaByUserIdAndGroupId(userId, perjalananid, grupid);
+    return await ProgressDoaRepository.getUserProgressByUserId(userId);
   },
-  
+
+  async getStatusDoa(perjalananid, grupid, token) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.user.id;
+    return await ProgressDoaRepository.getStatusDoa(
+      perjalananid,
+      grupid,
+      userId
+    );
+  },
 };
 
 module.exports = ProgressDoaService;

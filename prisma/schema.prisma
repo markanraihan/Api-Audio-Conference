@@ -8,188 +8,238 @@ datasource db {
 }
 
 model Grup {
-  grupid       String         @id @default(uuid()) @db.VarChar(36)
-  nama_grup    String         @db.VarChar(36)
-  created_by   String         @db.VarChar(36)
-  created_at   DateTime       @default(now())
-  finish_at    DateTime?
-  open_user    Int
-  status       String         @db.VarChar(50)
-  userId       String         @db.VarChar(36) // Foreign key untuk relasi ke Users
-  roomid       String?        @unique
-  room         Room?          @relation(fields: [roomid], references: [id])
-  participants Peserta_Grup[]
-  progress     Progress[]
-  user         Users          @relation(fields: [userId], references: [id]) // Relasi ke Users
-  UsersGoogle  UsersGoogle[]
-
+  grupid          String                @id @default(uuid()) @db.VarChar(36)
+  nama_grup       String                @db.VarChar(36)
+  created_by      String                @db.VarChar(36)
+  created_at      DateTime              @default(now())
+  finish_at       DateTime?
+  open_user       Int
+  status          String                @db.VarChar(50)
+  userId          String                @db.VarChar(36)
+  roomid          String?               @unique
+  room            Room?                 @relation(fields: [roomid], references: [id])
+  user            Users                 @relation(fields: [userId], references: [id])
+  progress        Progress[]
   progressDetails Progress_perjalanan[]
-  @@index([userId]) // Gunakan index untuk mempercepat pencarian
+  participants    Peserta_Grup[]        @relation("GrupToPeserta_Grup")
+
+  @@index([userId])
 }
 
 model Peserta_Grup {
-  peserta_grupid String   @id @default(uuid()) @db.VarChar(36)
-  grupid         String   @db.VarChar(36)
-  userId         String   @db.VarChar(36)
-  roomid         String?  @unique
-  joinedAt       DateTime @default(now())
-  online         String   @db.VarChar(10)
-
-  grup          Grup[]
-  user          Users        @relation(fields: [userId], references: [id])
-  room          Room?        @relation(fields: [roomid], references: [id]) // Tambahkan ini untuk relasi ke Room
-  UsersGoogle   UsersGoogle? @relation(fields: [usersGoogleId], references: [id])
-  usersGoogleId String?      @db.VarChar(36)
+  peserta_grupid String       @id @default(uuid()) @db.VarChar(36)
+  grupid         String       @db.VarChar(36)
+  userId         String       @db.VarChar(36)
+  roomid         String?      @unique
+  joinedAt       DateTime     @default(now())
+  online         String       @db.VarChar(10)
+  room           Room?        @relation(fields: [roomid], references: [id])
+  user           Users        @relation(fields: [userId], references: [id])
+  grup           Grup[]       @relation("GrupToPeserta_Grup")
 
   @@unique([grupid, userId])
+  @@index([userId], map: "Peserta_Grup_userId_fkey")
 }
 
 model Progress {
-  progressid       String  @id @default(uuid()) @db.VarChar(36)
-  grupid           String  @db.VarChar(36)
-  jenis_perjalanan String  @db.VarChar(20)
+  progressid       String                @id @default(uuid()) @db.VarChar(36)
+  grupid           String                @db.VarChar(36)
+  jenis_perjalanan String                @db.VarChar(20)
   live             Int
   status           Boolean
-  is_finished      Boolean @default(false)
+  is_finished      Boolean               @default(false)
   waktu_mulai      DateTime?
-  perjalananid     String?  @db.VarChar(36) // Kolom perjalananid
-  
-  perjalanan       Perjalanan? @relation(fields: [perjalananid], references: [perjalananid])
-  grup            Grup                  @relation(fields: [grupid], references: [grupid])
-  progressDetails Progress_perjalanan[] 
-  progressDoa     Progress_Doa[] 
+  perjalananid     String?               @db.VarChar(36)
+  grup             Grup                  @relation(fields: [grupid], references: [grupid])
+  perjalanan       Perjalanan?           @relation(fields: [perjalananid], references: [perjalananid])
+  progressDoa      Progress_Doa[]
+  progressDetails  Progress_perjalanan[]
+
+  @@index([grupid], map: "Progress_grupid_fkey")
+  @@index([perjalananid], map: "Progress_perjalananid_fkey")
 }
 
 model Progress_perjalanan {
-  progress_perjalananid String    @id @default(uuid()) @db.VarChar(36)
-  progressid            String    @db.VarChar(36)
-  grupid                String?    @db.VarChar(36) 
-  userId                String    @db.VarChar(36)
-  perjalananid          String    @db.VarChar(36)
-  waktu_mulai           DateTime  
+  progress_perjalananid String       @id @default(uuid()) @db.VarChar(36)
+  progressid            String       @db.VarChar(36)
+  grupid                String?      @db.VarChar(36)
+  userId                String       @db.VarChar(36)
+  perjalananid          String       @db.VarChar(36)
+  waktu_mulai           DateTime
   time_selesai          DateTime?
-  durasi_progress       String?   
+  durasi_progress       String?
+  grup                  Grup?        @relation(fields: [grupid], references: [grupid])
+  perjalanan            Perjalanan   @relation(fields: [perjalananid], references: [perjalananid])
+  progress              Progress     @relation(fields: [progressid], references: [progressid])
+  user                  Users        @relation(fields: [userId], references: [id])
 
-  progress      Progress     @relation(fields: [progressid], references: [progressid])
-  grup          Grup?        @relation(fields: [grupid], references: [grupid]) // Relasi ke Grup
-  user          Users        @relation(fields: [userId], references: [id])
-  perjalanan    Perjalanan   @relation(fields: [perjalananid], references: [perjalananid])
-  UsersGoogle   UsersGoogle? @relation(fields: [usersGoogleId], references: [id])
-  usersGoogleId String?      @db.VarChar(36)
+  @@index([grupid], map: "Progress_perjalanan_grupid_fkey")
+  @@index([perjalananid], map: "Progress_perjalanan_perjalananid_fkey")
+  @@index([progressid], map: "Progress_perjalanan_progressid_fkey")
+  @@index([userId], map: "Progress_perjalanan_userId_fkey")
 }
 
 model Perjalanan {
-  perjalananid    String @id @default(uuid()) @db.VarChar(36)
-  nama_perjalanan String @db.VarChar(100)
-  sort_order      Int    @default(0)
-
-  progress        Progress[]
+  perjalananid        String                @id @default(uuid()) @db.VarChar(36)
+  nama_perjalanan     String                @db.VarChar(100)
+  sort_order          Int                   @default(0)
+  doa                 Doa[]
+  progress            Progress[]
   progress_perjalanan Progress_perjalanan[]
-  doa                Doa[]
+  riwayatPerjalanan RiwayatPerjalanan[]
 }
 
 model Profiles {
-  profileid String   @id @default(uuid()) @db.VarChar(36)
-  name      String   @db.VarChar(255)
-  whatsapp  String
-  photo     String?  @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  profileid   String        @id @default(uuid()) @db.VarChar(36)
+  name        String        @db.VarChar(255)
+  whatsapp    String
+  photo       String?       @db.VarChar(255)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   userId      String        @unique
   user        Users         @relation(fields: [userId], references: [id])
-  UsersGoogle UsersGoogle[]
 }
 
 model Room {
-  id             String @id @default(uuid()) @db.VarChar(36)
-  nama_room      String @db.VarChar(100)
-  token_speaker  String @db.VarChar(1000)
-  token_listener String @db.VarChar(1000)
-
-  grup         Grup[]
-  Peserta_Grup Peserta_Grup[]
+  id             String        @id @default(uuid()) @db.VarChar(36)
+  nama_room      String        @db.VarChar(100)
+  token_speaker  String        @db.VarChar(1000)
+  token_listener String        @db.VarChar(1000)
+  grup           Grup?
+  Peserta_Grup   Peserta_Grup?
 }
 
 model Users {
-  id           String           @id @default(uuid()) @db.VarChar(36)
-  name         String           @db.VarChar(255)
-  password     String           @db.VarChar(255)
-  email        String           @unique @db.VarChar(255)
-  whatsapp     String           @unique @db.VarChar(255)
-  role         enum_Users_role? @default(user)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  lastLogin    DateTime?
-  status_login Boolean          @default(false)
-  currentToken String?          @db.Text // Menyimpan token aktif
-
-  profile         Profiles?
-  groups          Peserta_Grup[]
-  progressDetails Progress_perjalanan[] 
+  id              String                @id @default(uuid()) @db.VarChar(36)
+  name            String                @db.VarChar(255)
+  password        String?               @db.VarChar(255)
+  email           String                @unique @db.VarChar(255)
+  whatsapp        String?               @db.VarChar(255)
+  role            enum_Users_role?      @default(user)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  lastLogin       DateTime?
+  status_login    Boolean               @default(false)
+  currentToken    String?               @db.Text
+  googleId        String?               @unique @db.VarChar(255)
   grup            Grup[]
-}
-
-model UsersGoogle {
-  id           String           @id @default(uuid()) @db.VarChar(36)
-  name         String           @unique @db.VarChar(255)
-  email        String           @unique @db.VarChar(255)
-  whatsapp     String           @unique @db.VarChar(255)
-  role         enum_Users_role? @default(user)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  lastLogin    DateTime?
-  status_login Boolean          @default(false)
-
-  profile           Profiles?             @relation(fields: [profilesProfileid], references: [profileid])
-  groups            Peserta_Grup[]
-  progressDetails   Progress_perjalanan[] 
-  Grup              Grup?                 @relation(fields: [grupGrupid], references: [grupid])
-  grupGrupid        String?               @db.VarChar(36)
-  profilesProfileid String?               @db.VarChar(36)
+  groups          Peserta_Grup[]
+  profile         Profiles?
+  progressDetails Progress_perjalanan[]
+  usersOnRiwayatGrup UsersOnRiwayatGrup[]
 }
 
 model Doa {
-  doaid        String  @id @default(uuid()) @db.VarChar(36)
+  doaid        String         @id @default(uuid()) @db.VarChar(36)
+  doa_urut     Int
   judul_doa    String
   perjalananid String
-  link_audio   String? @db.VarChar(255) 
-  perjalanan   Perjalanan @relation(fields: [perjalananid], references: [perjalananid])
-  ayat         Ayat[] // Hapus onDelete di sini
-  progressDoa  Progress_Doa[] 
+  link_audio   String?        @db.VarChar(255)
+  ayat         Ayat[]
+  perjalanan   Perjalanan     @relation(fields: [perjalananid], references: [perjalananid])
+  progressDoa  Progress_Doa[]
+  riwayatDoa RiwayatDoa[]
+
+  @@index([perjalananid], map: "Doa_perjalananid_fkey")
 }
 
 model Ayat {
-  ayatid      String @id @default(uuid()) 
+  ayatid      String  @id @default(uuid())
   teks_ayat   String
   terjemahan  String?
   urutan_ayat Int
   doaid       String
-  doa         Doa    @relation(fields: [doaid], references: [doaid], onDelete: Cascade) 
+  doa         Doa     @relation(fields: [doaid], references: [doaid], onDelete: Cascade)
+
+  @@index([doaid], map: "Ayat_doaid_fkey")
 }
 
 model Progress_Doa {
-  progress_doaid String   @id @default(uuid()) @db.VarChar(36)
-  progressid     String   @db.VarChar(36)
-  doaid          String   @db.VarChar(36)
-  doa_mulai      DateTime @default(now())  
-  doa_selesai    DateTime?                 
-  durasi_doa     String?                      
-  cek_doa        Boolean @default(false)   
-
+  progress_doaid String    @id @default(uuid()) @db.VarChar(36)
+  progressid     String    @db.VarChar(36)
+  progress_perjalananid String? @db.VarChar(36)
+  doaid          String    @db.VarChar(36)
+  doa_mulai      DateTime  @default(now())
+  doa_selesai    DateTime?
+  durasi_doa     String?
+  cek_doa        Boolean   @default(false)
+  doa            Doa       @relation(fields: [doaid], references: [doaid])
   progress       Progress  @relation(fields: [progressid], references: [progressid])
-  doa           Doa       @relation(fields: [doaid], references: [doaid])
 
   @@unique([progressid, doaid])
+  @@index([doaid], map: "Progress_Doa_doaid_fkey")
 }
 
 model Video {
-  videoid      String   @id @default(uuid())
-  judul_vid    String
-  deskripsi    String
-  link_vid     String
-  thumbnail    String
-  created_at   DateTime @default(now())
+  videoid    String   @id @default(uuid())
+  judul_vid  String
+  deskripsi  String
+  link_vid   String
+  thumbnail  String
+  created_at DateTime @default(now())
+}
+
+model RiwayatGrup {
+  riwayatgrupid      String   @id @default(uuid()) @db.VarChar(36)
+  nama_grup          String   @db.VarChar(255)
+  created_at         DateTime @default(now())
+
+  riwayatPerjalanan  RiwayatPerjalanan[]
+  usersOnRiwayatGrup UsersOnRiwayatGrup[]
+}
+
+model UsersOnRiwayatGrup {
+  riwayatgrupid   String      @db.VarChar(36)
+  userid          String      @db.VarChar(36)
+  name            String?     @db.VarChar(255)
+  role            String?     @db.VarChar(255)
+
+  riwayatGrup RiwayatGrup @relation(fields: [riwayatgrupid], references: [riwayatgrupid], onDelete: Cascade)
+  user        Users       @relation(fields: [userid], references: [id], onDelete: Cascade)
+
+  @@id([riwayatgrupid, userid])
+}
+
+model RiwayatPerjalanan {
+  riwayatperjalananid  String       @id @default(uuid()) @db.VarChar(36)
+  riwayatgrupid        String       @db.VarChar(36)
+  perjalananid         String?      @db.VarChar(36)
+  nama_perjalanan      String       @db.VarChar(255)
+  waktu_mulai          DateTime     @default(now())
+  time_selesai         DateTime?
+  durasi_progress      String?
+  riwayatGrup          RiwayatGrup  @relation(fields: [riwayatgrupid], references: [riwayatgrupid])
+  perjalanan           Perjalanan?  @relation(fields: [perjalananid], references: [perjalananid])
+  riwayatDoa           RiwayatDoa[]
+
+  @@index([perjalananid])
+}
+
+model RiwayatDoa {
+  riwayatdoaid       String   @id @default(uuid()) @db.VarChar(36)
+  riwayatperjalananid String   @db.VarChar(36)
+  doaid              String?  @db.VarChar(36)
+  judul_doa         String   @db.VarChar(255)
+  durasi_doa        String?
+  cek_doa           Boolean  @default(false)
+  riwayatPerjalanan RiwayatPerjalanan @relation(fields: [riwayatperjalananid], references: [riwayatperjalananid])
+  doa               Doa?     @relation(fields: [doaid], references: [doaid])
+
+  @@index([riwayatperjalananid])
+}
+
+model DeletedUsers {
+  deletedId String  @id @default(uuid())
+  userId    String  @unique
+  name      String  @default("Unknown")
+  email     String?
+  alasan    String
+  deletedAt DateTime @default(now())
+}
+
+model DeleteAccReason {
+  reasonId String @id @default(uuid())
+  reason   String
 }
 
 enum enum_Users_role {
