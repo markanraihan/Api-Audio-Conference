@@ -60,7 +60,7 @@ const AuthController = {
     const { email, password } = req.body;
 
     try {
-      // Validasi user
+      // Validasi user berdasarkan email
       const user = await prisma.users.findUnique({
         where: { email },
         include: {
@@ -71,18 +71,18 @@ const AuthController = {
 
       // Jika user tidak ditemukan
       if (!user) {
-        return res.status(404).json({ errors: [{ msg: "User not found" }] });
+        return res.status(404).json({ errors: [{ msg: "User tidak ditemukan" }] });
       }
 
-      // Cek apakah akun sudah diverifikasi
-      if (!user.is_verified) {
-        return res.status(403).json({ errors: [{ msg: "Akun belum diverifikasi. Silakan cek email Anda untuk verifikasi." }] });
-      }
-
-      // Cek password
+      // Cek password terlebih dahulu
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
+        return res.status(400).json({ errors: [{ msg: "Email atau kata sandi salah" }] });
+      }
+
+      // Setelah password benar, cek apakah akun sudah diverifikasi
+      if (!user.is_verified) {
+        return res.status(403).json({ errors: [{ msg: "Akun belum diverifikasi. Silakan verifikasi email anda terlebih dahulu" }] });
       }
 
       // Generate token baru
@@ -125,77 +125,9 @@ const AuthController = {
       );
     } catch (err) {
       console.error(err.message);
-      res.status(500).send("Server error");
+      res.status(500).json({ errors: [{ msg: "Server error" }] });
     }
   },
-
-  // login: async (req, res) => {
-  //   const { email, password } = req.body;
-
-  //   try {
-  //     // Validasi user
-  //     const user = await prisma.users.findUnique({
-  //       where: { email },
-  //       include: {
-  //         groups: true, // Muat data grup terkait user
-  //         profile: true,
-  //       },
-  //     });
-
-  //     if (!user) {
-  //       return res.status(404).json({ errors: [{ msg: "User not found" }] });
-  //     }
-
-  //     const isMatch = await bcrypt.compare(password, user.password);
-  //     if (!isMatch) {
-  //       return res
-  //         .status(400)
-  //         .json({ errors: [{ msg: "Invalid credentials" }] });
-  //     }
-
-  //     // Generate token baru
-  //     const payload = {
-  //       user: {
-  //         id: user.id,
-  //         role: user.role,
-  //         name: user.name,
-  //       },
-  //     };
-
-  //     jwt.sign(
-  //       payload,
-  //       process.env.JWT_SECRET,
-  //       { expiresIn: "30d" },
-  //       async (err, token) => {
-  //         if (err) throw err;
-
-  //         // Simpan token baru di database
-  //         await prisma.users.update({
-  //           where: { id: user.id },
-  //           data: {
-  //             status_login: true,
-  //             lastLogin: new Date(),
-  //             currentToken: token, // Simpan token aktif
-  //           },
-  //         });
-
-  //         return res.status(200).json({
-  //           status: "success",
-  //           username: user.name,
-  //           id: user.id,
-  //           role: user.role,
-  //           email: user.email,
-  //           token,
-  //           groups: user.groups, // Sertakan grup dalam response
-  //           photo: user.profile ? user.profile.photo : null,
-  //         });
-  //       }
-  //     );
-  //   } catch (err) {
-  //     console.error(err.message);
-  //     res.status(500).send("Server error");
-  //   }
-  // },
 
   googleLogin: async (req, res) => {
     try {
