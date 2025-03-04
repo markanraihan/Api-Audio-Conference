@@ -114,8 +114,9 @@ model Users {
   name            String                @db.VarChar(255)
   password        String?               @db.VarChar(255)
   email           String                @unique @db.VarChar(255)
+  is_verified     Boolean               @default(false)
   whatsapp        String?               @db.VarChar(255)
-  role            enum_Users_role?      @default(user)
+  role            enum_Users_role?      @default(user) 
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
   lastLogin       DateTime?
