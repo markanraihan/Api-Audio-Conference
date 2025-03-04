@@ -474,17 +474,14 @@ const GrupController = {
   },
 
   deleteGrup: async (req, res) => {
-    const { grupid } = req.body; // Mengambil grupid dari parameter URL
-    const { userId } = req.query; // Mengambil userId dari query
+    const { grupid } = req.body;
 
     try {
       const { token } = req.headers;
       const responseJWT = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Cek apakah grup dengan grupid tersebut ada (hanya mendapatkan data grup)
-      const grup = await prisma.grup.findUnique({
-        where: { grupid },
-      });
+      // Cek apakah grup ada
+      const grup = await prisma.grup.findUnique({ where: { grupid } });
 
       if (!grup) {
         return res.status(404).json({ msg: "Grup tidak ditemukan." });
@@ -499,29 +496,30 @@ const GrupController = {
       const isUstadz = user.role === "ustadz";
       const isCreator = grup.created_by === user.id;
 
-      // Hanya pembuat grup atau ustadz yang boleh menghapus grup
       if (!isUstadz && !isCreator) {
         return res
           .status(403)
           .json({ msg: "Anda tidak memiliki hak untuk menghapus grup ini." });
       }
 
-      // Hapus semua peserta yang tergabung dalam grup terlebih dahulu
-      await prisma.peserta_Grup.deleteMany({
-        where: { grupid },
+      // *Hapus data berelasi terlebih dahulu*
+      await prisma.progress_Doa.deleteMany({
+        where: { progress: { grupid } },
       });
 
-      // Hapus grupnya
-      await prisma.grup.delete({
-        where: { grupid },
-      });
+      await prisma.progress_perjalanan.deleteMany({ where: { grupid } });
+      await prisma.progress.deleteMany({ where: { grupid } });
+      await prisma.peserta_Grup.deleteMany({ where: { grupid } });
+
+      // *Hapus grup setelah semua data terkait dihapus*
+      await prisma.grup.delete({ where: { grupid } });
 
       res.json({
         status: "success",
-        message: "Grup dan semua peserta telah berhasil dihapus.",
+        message: "Grup dan semua data terkait telah berhasil dihapus.",
       });
     } catch (err) {
-      console.error(err.message);
+      console.error(err);
       res.status(500).send("Server error");
     }
   },

@@ -108,36 +108,36 @@
         where: { progressid },
         include: { grup: true, perjalanan: true },
       });
-
+  
       if (!progress) {
         throw new Error("Progress tidak ditemukan.");
       }
-
+  
       if (progress.live === 0) {
         throw new Error("Progress sudah dihentikan sebelumnya.");
       }
-
+  
       // Gunakan zona waktu Mekah (Arab)
-      const timeNow = moment().tz('Asia/Riyadh').toDate(); // Menggunakan moment-timezone untuk waktu sekarang
+      const timeNow = moment().tz("Asia/Riyadh").toDate(); // Menggunakan moment-timezone untuk waktu sekarang
       const waktuMulai = progress.waktu_mulai
-        ? moment(progress.waktu_mulai).tz('Asia/Riyadh').toDate() // Menggunakan moment-timezone untuk waktu mulai
-        : moment().tz('Asia/Riyadh').toDate();
-
+        ? moment(progress.waktu_mulai).tz("Asia/Riyadh").toDate() // Menggunakan moment-timezone untuk waktu mulai
+        : moment().tz("Asia/Riyadh").toDate();
+  
       const totalSeconds = Math.floor((timeNow - waktuMulai) / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
       const formattedDuration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-
+  
       // Ambil peserta dalam grup ini
       const participants = await prisma.peserta_Grup.findMany({
         where: { grupid: progress.grupid },
         select: { userId: true },
       });
-
+  
       if (participants.length === 0) {
         throw new Error("Tidak ada peserta dalam grup ini.");
       }
-
+  
       // Buat progress_perjalanan baru untuk setiap peserta
       const progressPerjalananData = participants.map((participant) => ({
         progress_perjalananid: crypto.randomUUID(),
@@ -149,24 +149,40 @@
         time_selesai: timeNow,
         durasi_progress: formattedDuration,
       }));
-
+  
       await prisma.progress_perjalanan.createMany({
         data: progressPerjalananData,
       });
-
+  
       // Update progress untuk menandai sesi selesai
       await prisma.progress.update({
         where: { progressid },
         data: { live: 0, is_finished: true },
       });
-
+  
+      // Cek apakah semua perjalanan dalam grup sudah selesai
+      const totalPerjalanan = await prisma.progress.count({
+        where: { grupid: progress.grupid },
+      });
+  
+      const selesaiPerjalanan = await prisma.progress.count({
+        where: { grupid: progress.grupid, is_finished: true },
+      });
+  
+      if (totalPerjalanan === selesaiPerjalanan) {
+        await prisma.grup.update({
+          where: { grupid: progress.grupid },
+          data: { finish_at: timeNow },
+        });
+      }
+  
       return {
         msg: "Progress berhasil dihentikan dan perjalanan dicatat.",
         time_selesai: timeNow,
         durasi_progress: formattedDuration,
       };
     });
-  };
+  };  
 
   const getValidationProgress = async (progressid) => {
     return await prisma.progress.findUnique({
