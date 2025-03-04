@@ -1,3 +1,4 @@
+// EmailOtpRoutes.js
 const express = require('express');
 const { requestOTP, verifyOTP } = require('../controller/EmailOtp/EmailOtpController');
 

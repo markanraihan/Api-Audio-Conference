@@ -1,3 +1,4 @@
+// EmailOtpRepository.js
 const prisma = require("../../utils/Prisma");
 
 const findUserByEmail = async (email) => {

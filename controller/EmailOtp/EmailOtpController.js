@@ -1,3 +1,4 @@
+// EmailController.js
 const { generateOTP, sendEmail } = require("../../services/EmailOtp/EmailOtpService");
 
 const otpStore = {}; // Simpan OTP sementara : development Only
@@ -7,8 +8,8 @@ const requestOTP = async (req, res) => {
     if (!email || !type) return res.status(400).json({ message: "Email dan type diperlukan" });
 
     const otp = generateOTP();
-    const subject = type === "reset" ? "Reset Password OTP" : "Delete Account OTP";
-    const message = `Your OTP for ${type} is: ${otp}. It will expire in 10 minutes.`;
+    const subject = type === "reset" ? "Reset Password OTP" : type === "delete" ? "Delete Account OTP" : "Register Account OTP";
+    const message = `${otp}`;
 
     const result = await sendEmail(email, subject, message);
     if (!result.success) return res.status(400).json({ message: result.message });
