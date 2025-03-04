@@ -1,5 +1,6 @@
 // EmailController.js
 const { generateOTP, sendEmail } = require("../../services/EmailOtp/EmailOtpService");
+const { verifyUserByEmail } = require("../../repositories/EmailOtp/EmailOtpRepository");
 
 const otpStore = {}; // Simpan OTP sementara : development Only
 
@@ -20,7 +21,7 @@ const requestOTP = async (req, res) => {
     res.json({ message: "OTP dikirim" });
 };
 
-const verifyOTP = (req, res) => {
+const verifyOTP = async (req, res) => {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: "Email dan OTP diperlukan" });
 
@@ -29,6 +30,11 @@ const verifyOTP = (req, res) => {
 
     const type = otpStore[email].type; // Ambil tipe OTP
     delete otpStore[email]; // Hapus OTP setelah verifikasi
+     // Jika OTP untuk registrasi, update is_verified di database
+    if (type === "register") {
+        const result = await verifyUserByEmail(email);
+        if (result.error) return { error: result.error };
+    }
 
     res.json({ message: "OTP valid", type });
 };

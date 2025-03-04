@@ -20,17 +20,13 @@ const generateOTP = () => {
 
 const sendEmail = async (email, subject, otp) => {
     try {
-        // Jika subject bukan "Register Account OTP", cek apakah user terdaftar
-        if (subject !== "Register Account OTP") {
-            const result = await findUserByEmail(email);
+        const result = await findUserByEmail(email);
 
-            if (result.error) {
-                console.log(result.error);
-                return { success: false, message: result.error };
-            }
+        if (result.error) {
+            console.log(result.error);
+            return { success: false, message: result.error };
         }
 
-        // Template HTML untuk email OTP
         const htmlTemplate = `
         <!DOCTYPE html>
         <html lang="id">
@@ -85,7 +81,6 @@ const sendEmail = async (email, subject, otp) => {
                                         <ul style="margin: 0; padding: 0 0 0 20px; color: #566a76; font-size: 14px;">
                                             <li style="margin-bottom: 5px;">Jangan bagikan OTP Anda ke siapa pun</li>
                                             <li style="margin-bottom: 5px;">Tim Maqdis tidak akan pernah meminta OTP Anda</li>
-                                            <li>Pastikan URL website benar sebelum login</li>
                                         </ul>
                                     </div>
                                 </td>

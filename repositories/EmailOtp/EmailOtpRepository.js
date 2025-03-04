@@ -17,4 +17,17 @@ const findUserByEmail = async (email) => {
     return { user }; // Kembalikan user jika ditemukan dan memiliki password
 };
 
-module.exports = { findUserByEmail };
+const verifyUserByEmail = async (email) => {
+    try {
+        const updatedUser = await prisma.users.update({
+            where: { email },
+            data: { is_verified: true },
+        });
+
+        return { success: true, user: updatedUser };
+    } catch (error) {
+        return { error: "Gagal memperbarui status verifikasi" };
+    }
+};
+
+module.exports = { findUserByEmail, verifyUserByEmail };

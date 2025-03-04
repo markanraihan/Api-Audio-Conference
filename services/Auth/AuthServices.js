@@ -50,6 +50,7 @@ class AuthService {
             user = await authRepository.createUser({
                 name,
                 email,
+                is_verified: true,
                 googleId: sub,
                 whatsapp: "",
                 role: "user",
