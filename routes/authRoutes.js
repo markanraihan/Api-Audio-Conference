@@ -26,10 +26,11 @@ router.post(
 // @desc     Authenticate user & get token
 // @access   Public
 router.post("/login", [check("email", "Please include a valid email").isEmail(), check("password", "Password is required").exists()], AuthController.login);
-
+router.post("/google", AuthController.googleLogin);
 router.post("/logout", auth, AuthController.logout);
 
 //change passowrd
 router.put("/password", auth, AuthController.changePassword);
+router.post("/reset-password", AuthController.resetPassword);
 
 module.exports = router;

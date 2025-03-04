@@ -8,6 +8,12 @@ const ProfileController = require("../controller/Profile/ProfileController");
 router.get("/me", auth, ProfileController.getProfileByToken);
 router.get("/", auth, ProfileController.getAllUsers);
 router.put("/", auth, upload.single("photo"), ProfileController.updateProfileByToken);
-//UpdateProfileBytoken
+
+router.get("/reason", ProfileController.getDeleteReasons);
+router.post("/reason", ProfileController.createDeleteReason);
+router.put("/reason/:reasonId", ProfileController.updateDeleteReason);
+router.delete("/reason/:reasonId", ProfileController.deleteDeleteReason);
+
+router.delete("/delete-account", ProfileController.deleteAccount);
 
 module.exports = router;

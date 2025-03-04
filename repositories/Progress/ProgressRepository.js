@@ -1,6 +1,7 @@
-  // ProgressRepository.js 
+  // ProgressRepository.js
   const prisma = require("../../utils/Prisma");
   const moment = require('moment-timezone'); // Import moment-timezone
+  const crypto = require("crypto");
 
   const findGrupById = async (grupid) => {
     return prisma.grup.findUnique({ where: { grupid } });
@@ -23,16 +24,16 @@
     return prisma.$transaction(async (prisma) => {
       // Gunakan moment-timezone untuk waktu mulai dalam zona waktu Arab
       const waktuMulai = moment().tz('Asia/Riyadh').toDate(); // Konversi ke zona waktu Arab
-  
+
       // Cari perjalanan berdasarkan nama_perjalanan
       const perjalanan = await prisma.perjalanan.findFirst({
         where: { nama_perjalanan: jenis_perjalanan },
       });
-  
+
       if (!perjalanan) {
         throw new Error("Perjalanan tidak ditemukan.");
       }
-  
+
       // Cek apakah progress sudah ada
       const existingProgress = await prisma.progress.findFirst({
         where: {
@@ -40,28 +41,28 @@
           jenis_perjalanan,
         },
       });
-  
+
       if (existingProgress && existingProgress.is_finished === true) {
         throw new Error("Progress ini sudah dihentikan sebelumnya dan tidak dapat diaktifkan lagi.");
       }
-  
+
       if (existingProgress) {
         if (existingProgress.live === 1) {
           throw new Error("Progress sudah aktif, tidak bisa diaktifkan lagi.");
         }
-  
+
         // Jika progress ada tapi belum selesai, update live jadi 1
         const updatedProgress = await prisma.progress.update({
           where: { progressid: existingProgress.progressid },
           data: { live: 1, waktu_mulai: waktuMulai, perjalananid: perjalanan.perjalananid },
         });
-  
+
         return {
           msg: "Progress diperbarui ke status live",
           data: updatedProgress,
         };
       }
-  
+
       // Buat progress baru
       const newProgress = await prisma.progress.create({
         data: {
@@ -74,12 +75,12 @@
           perjalananid: perjalanan.perjalananid,
         },
       });
-  
+
       // Pastikan ada peserta online
       if (participants.length === 0) {
         throw new Error("Tidak ada peserta yang online.");
       }
-  
+
       // Insert peserta ke progress_perjalanan
       await prisma.progress_perjalanan.create({
         data: {
@@ -92,7 +93,7 @@
           durasi_progress: 0,
         },
       });
-  
+
       return {
         msg: "Progress berhasil dibuat dan peserta ditambahkan",
         data: newProgress,
@@ -117,10 +118,10 @@
       }
   
       // Gunakan zona waktu Mekah (Arab)
-      const timeNow = moment().tz('Asia/Riyadh').toDate(); // Menggunakan moment-timezone untuk waktu sekarang
+      const timeNow = moment().tz("Asia/Riyadh").toDate(); // Menggunakan moment-timezone untuk waktu sekarang
       const waktuMulai = progress.waktu_mulai
-        ? moment(progress.waktu_mulai).tz('Asia/Riyadh').toDate() // Menggunakan moment-timezone untuk waktu mulai
-        : moment().tz('Asia/Riyadh').toDate();
+        ? moment(progress.waktu_mulai).tz("Asia/Riyadh").toDate() // Menggunakan moment-timezone untuk waktu mulai
+        : moment().tz("Asia/Riyadh").toDate();
   
       const totalSeconds = Math.floor((timeNow - waktuMulai) / 1000);
       const minutes = Math.floor(totalSeconds / 60);
@@ -159,13 +160,29 @@
         data: { live: 0, is_finished: true },
       });
   
+      // Cek apakah semua perjalanan dalam grup sudah selesai
+      const totalPerjalanan = await prisma.progress.count({
+        where: { grupid: progress.grupid },
+      });
+  
+      const selesaiPerjalanan = await prisma.progress.count({
+        where: { grupid: progress.grupid, is_finished: true },
+      });
+  
+      if (totalPerjalanan === selesaiPerjalanan) {
+        await prisma.grup.update({
+          where: { grupid: progress.grupid },
+          data: { finish_at: timeNow },
+        });
+      }
+  
       return {
         msg: "Progress berhasil dihentikan dan perjalanan dicatat.",
         time_selesai: timeNow,
         durasi_progress: formattedDuration,
       };
     });
-  };
+  };  
 
   const getValidationProgress = async (progressid) => {
     return await prisma.progress.findUnique({
@@ -207,29 +224,29 @@
         where: { progressid },
         include: { progressDetails: true },
       });
-  
+
       if (!progress) {
         throw new Error("Progress tidak ditemukan.");
       }
-  
+
       const waktuMulai = progress.waktu_mulai || new Date();
-  
+
       // Hitung durasi dalam detik
       const totalSeconds = Math.floor((timeNow - waktuMulai) / 1000);
-  
+
       // Konversi durasi ke format MM:SS
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
       const formattedDuration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  
+
       await prisma.progress_perjalanan.updateMany({
         where: { progressid },
-        data: { 
+        data: {
           time_selesai: timeNow,
           durasi_progress: formattedDuration, // Update durasi_progress dalam format MM:SS
         },
       });
-  
+
       return {
         msg: "Waktu selesai dan durasi_progress berhasil diupdate.",
         durasi_progress: formattedDuration,
@@ -278,13 +295,13 @@
         },
         distinct: ['grupid'], // Hanya ambil grup yang unik
       });
-  
+
       // Format data sesuai dengan respons yang diharapkan
       const formattedData = userProgress.map((progress) => ({
         nama_grup: progress.grup.nama_grup,
         grupid: progress.grupid,
       }));
-  
+
       return formattedData;
     } catch (err) {
       console.error("Error in getAllGrupByUserId Service:", err.message);

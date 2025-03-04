@@ -1,4 +1,4 @@
-// ProgressContreller.js 
+// ProgressContreller.js
 const moment = require('moment-timezone'); // Import moment-timezone
 
 const ProgressServices = require("../../services/Progress/ProgressServices");
@@ -41,17 +41,30 @@ const getLiveProgress = async (req, res) => {
   }
 };
 
-const getUserProgressHistory = async (req, res) => {
-  const { userId } = req.params;
+const getUserProgressHistoryByToken = async (req, res) => {
+  const { token } = req.headers;
+  const { grupid } = req.params; // Ambil grupid dari params
+
+  if (!grupid) {
+    return res.status(400).json({ msg: "Grup ID diperlukan." });
+  }
 
   try {
-    const result = await ProgressServices.getUserProgressHistory(userId);
+    const result = await ProgressServices.getUserProgressHistoryByToken(token);
 
     if (result.length === 0) {
       return res.status(404).json({ msg: "Tidak ada riwayat perjalanan untuk user ini." });
     }
 
-    const groupedData = result.reduce((acc, item) => {
+    // Filter data berdasarkan grupid dari params
+    const filteredData = result.filter((item) => item.grupid === grupid);
+
+    if (filteredData.length === 0) {
+      return res.status(404).json({ msg: "Tidak ada data untuk grup ini." });
+    }
+
+    // Grupkan data berdasarkan grupid
+    const groupedData = filteredData.reduce((acc, item) => {
       const { grupid, grup, userId } = item;
 
       if (!acc[grupid]) {
@@ -81,7 +94,7 @@ const getUserProgressHistory = async (req, res) => {
       return acc;
     }, {});
 
-    const firstGroup = Object.values(groupedData)[0];
+    const firstGroup = groupedData[grupid];
 
     return res.status(200).json({
       msg: "Riwayat perjalanan ditemukan",
@@ -96,6 +109,7 @@ const getUserProgressHistory = async (req, res) => {
   }
 };
 
+
 const getAllGrupByUserId = async (req, res) => {
   const { userId } = req.params;
 
@@ -107,10 +121,24 @@ const getAllGrupByUserId = async (req, res) => {
   }
 };
 
+const getAllGrupByToken = async (req, res) => {
+  try {
+    const { token } = req.headers;
+
+    const grups = await ProgressServices.getAllGrupByToken(token);
+
+    res.status(200).json({ msg: "Grup ditemukan", data: grups });
+  } catch (err) {
+    console.error("Error in getAllGrupByToken Controller:", err.message);
+    res.status(500).send({ msg: "Server error", error: err.message });
+  }
+};
+
 module.exports = {
   createProgress,
   getLiveProgress,
   exitProgress,
-  getUserProgressHistory,
+  getUserProgressHistoryByToken,
   getAllGrupByUserId,
+  getAllGrupByToken,
 };

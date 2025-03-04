@@ -38,7 +38,31 @@ const getDoaByPerjalananId = async (req, res) => {
     }
 
     const doaList = await DoaService.getDoaByPerjalananId(perjalananId);
-    res.status(200).json(doaList);
+
+    const sortedDoaList = doaList.sort((a, b) => a.doa_urut - b.doa_urut);
+
+    res.status(200).json(sortedDoaList);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getStatusDoaByPerjalananId = async (req, res) => {
+  try {
+    const { perjalananid, progressid } = req.params;
+
+    if (!perjalananid || !progressid) {
+      return res
+        .status(400)
+        .json({ message: "perjalananId and progressId are required" });
+    }
+
+    const statusDoa = await DoaService.getStatusDoaByPerjalananId(
+      perjalananid,
+      progressid
+    );
+
+    res.status(200).json(statusDoa);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -47,18 +71,27 @@ const getDoaByPerjalananId = async (req, res) => {
 const createDoa = async (req, res) => {
   try {
     const { judul_doa, perjalananid, link_audio, ayat } = req.body;
-    const newDoa = await DoaService.createDoa({ judul_doa, perjalananid, link_audio, ayat });
+    const newDoa = await DoaService.createDoa({
+      judul_doa,
+      perjalananid,
+      link_audio,
+      ayat,
+    });
     res.status(201).json(newDoa);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
- 
+
 const updateDoa = async (req, res) => {
   try {
     const doaId = req.params.id;
-    const { judul_doa, link_audio, ayat } = req.body; 
-    const updatedDoa = await DoaService.updateDoa(doaId, { judul_doa, link_audio, ayat });
+    const { judul_doa, link_audio, ayat } = req.body;
+    const updatedDoa = await DoaService.updateDoa(doaId, {
+      judul_doa,
+      link_audio,
+      ayat,
+    });
     res.status(200).json(updatedDoa);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -79,6 +112,7 @@ module.exports = {
   getAllDoa,
   getDoaById,
   getDoaByPerjalananId,
+  getStatusDoaByPerjalananId,
   createDoa,
   updateDoa,
   deleteDoa,

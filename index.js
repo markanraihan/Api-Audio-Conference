@@ -16,6 +16,8 @@ const PerjalananRoutes = require("./routes/Perjalanan");
 const DoaRoutes = require("./routes/DoaRoutes");
 const ProgressDoaRoutes = require("./routes/ProgressDoaRoutes");
 const VideoRoutes = require('./routes/VideoRoutes');
+const RiwayatRoutes = require('./routes/RiwayatRoutes');
+const EmailOtpRoutes = require('./routes/EmailOtpRoutes');
 
 dotenv.config();
 
@@ -34,12 +36,14 @@ app.use("/api/profile", Profileroutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/Group", Gruproutes);
 app.use("/api/Audio", AudioRoutes);
-app.use("/api/progress", ProgressRoutes); 
+app.use("/api/progress", ProgressRoutes);
 app.use("/api/setStatus", setStatus);
 app.use("/api/Perjalanan", PerjalananRoutes);
 app.use("/api/Doa", DoaRoutes); // Masukin data doa untuk admin
 app.use('/api/Videos', VideoRoutes);
 app.use("/api/progressDoa", ProgressDoaRoutes); // Simpan ke progress_doaid
+app.use("/api/riwayat", RiwayatRoutes);
+app.use("/api/email", EmailOtpRoutes);
 
 const PORT = process.env.PORT || 5000;
 

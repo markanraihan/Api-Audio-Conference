@@ -1,7 +1,9 @@
+// AuthController.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const prisma = require("../../utils/Prisma");
+const AuthServices = require("../../services/Auth/AuthServices");
 
 const AuthController = {
   register: async (req, res) => {
@@ -17,7 +19,9 @@ const AuthController = {
         where: { email },
       });
       if (existingUser) {
-        return res.status(400).json({ errors: [{ msg: "Akun sudah pernah didaftarkan" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "Akun sudah pernah didaftarkan" }] });
       }
 
       // Hash password
@@ -61,13 +65,21 @@ const AuthController = {
         where: { email },
         include: {
           groups: true, // Muat data grup terkait user
+          profile: true,
         },
       });
 
+      // Jika user tidak ditemukan
       if (!user) {
         return res.status(404).json({ errors: [{ msg: "User not found" }] });
       }
 
+      // Cek apakah akun sudah diverifikasi
+      if (!user.is_verified) {
+        return res.status(403).json({ errors: [{ msg: "Akun belum diverifikasi. Silakan cek email Anda untuk verifikasi." }] });
+      }
+
+      // Cek password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(400).json({ errors: [{ msg: "Invalid credentials" }] });
@@ -78,34 +90,135 @@ const AuthController = {
         user: {
           id: user.id,
           role: user.role,
+          name: user.name,
         },
       };
 
-      jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "2h" }, async (err, token) => {
-        if (err) throw err;
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" },
+        async (err, token) => {
+          if (err) throw err;
 
-        // Simpan token baru di database
-        await prisma.users.update({
-          where: { id: user.id },
-          data: {
-            status_login: true,
-            lastLogin: new Date(),
-            currentToken: token, // Simpan token aktif
-          },
-        });
+          // Simpan token baru di database
+          await prisma.users.update({
+            where: { id: user.id },
+            data: {
+              status_login: true,
+              lastLogin: new Date(),
+              currentToken: token, // Simpan token aktif
+            },
+          });
 
-        return res.status(200).json({
-          status: "success",
-          username: user.name,
-          id: user.id,
-          role: user.role,
-          token,
-          groups: user.groups, // Sertakan grup dalam response
-        });
-      });
+          return res.status(200).json({
+            status: "success",
+            username: user.name,
+            id: user.id,
+            role: user.role,
+            email: user.email,
+            token,
+            groups: user.groups, // Sertakan grup dalam response
+            photo: user.profile ? user.profile.photo : null,
+          });
+        }
+      );
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server error");
+    }
+  },
+
+  // login: async (req, res) => {
+  //   const { email, password } = req.body;
+
+  //   try {
+  //     // Validasi user
+  //     const user = await prisma.users.findUnique({
+  //       where: { email },
+  //       include: {
+  //         groups: true, // Muat data grup terkait user
+  //         profile: true,
+  //       },
+  //     });
+
+  //     if (!user) {
+  //       return res.status(404).json({ errors: [{ msg: "User not found" }] });
+  //     }
+
+  //     const isMatch = await bcrypt.compare(password, user.password);
+  //     if (!isMatch) {
+  //       return res
+  //         .status(400)
+  //         .json({ errors: [{ msg: "Invalid credentials" }] });
+  //     }
+
+  //     // Generate token baru
+  //     const payload = {
+  //       user: {
+  //         id: user.id,
+  //         role: user.role,
+  //         name: user.name,
+  //       },
+  //     };
+
+  //     jwt.sign(
+  //       payload,
+  //       process.env.JWT_SECRET,
+  //       { expiresIn: "30d" },
+  //       async (err, token) => {
+  //         if (err) throw err;
+
+  //         // Simpan token baru di database
+  //         await prisma.users.update({
+  //           where: { id: user.id },
+  //           data: {
+  //             status_login: true,
+  //             lastLogin: new Date(),
+  //             currentToken: token, // Simpan token aktif
+  //           },
+  //         });
+
+  //         return res.status(200).json({
+  //           status: "success",
+  //           username: user.name,
+  //           id: user.id,
+  //           role: user.role,
+  //           email: user.email,
+  //           token,
+  //           groups: user.groups, // Sertakan grup dalam response
+  //           photo: user.profile ? user.profile.photo : null,
+  //         });
+  //       }
+  //     );
+  //   } catch (err) {
+  //     console.error(err.message);
+  //     res.status(500).send("Server error");
+  //   }
+  // },
+
+  googleLogin: async (req, res) => {
+    try {
+      const { idToken } = req.body;
+      if (!idToken)
+        return res.status(400).json({ message: "Token is required" });
+
+      const result = await AuthServices.signInWithGoogle(idToken);
+      res.json(result);
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  },
+
+  resetPassword: async (req, res) => {
+    const { email, newPassword } = req.body;
+
+    try {
+      const result = await AuthServices.resetPasswordByEmail(email, newPassword);
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({ msg: error.message });
     }
   },
 
@@ -132,7 +245,9 @@ const AuthController = {
 
       // Validasi kata sandi baru
       if (newPassword.length < 6) {
-        return res.status(400).json({ msg: "New password must be at least 6 characters long" });
+        return res
+          .status(400)
+          .json({ msg: "New password must be at least 6 characters long" });
       }
 
       // Enkripsi kata sandi baru
@@ -155,6 +270,7 @@ const AuthController = {
       res.status(500).send("Server error");
     }
   },
+
   logout: async (req, res) => {
     try {
       // Ambil user ID dari payload JWT atau session

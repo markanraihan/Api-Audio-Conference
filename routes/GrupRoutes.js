@@ -30,7 +30,7 @@ router.get('/cekLive/:grupid', GrupController.cekLive);
 router.post('/exit', GrupController.exitGrup)
 
 // menghapus grup
-router.delete('/:grupid',Ustadz, GrupController.deleteGrup);
+router.delete('/',Ustadz, GrupController.deleteGrup);
 
 // Get Live
 router.get('/getCekLive', GrupController.getCekLive)

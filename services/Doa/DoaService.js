@@ -1,5 +1,6 @@
 // DoaService.js
 const DoaRepository = require("../../repositories/Doa/DoaRepository");
+const ProgressDoaRepository = require("../../repositories/ProgressDoa/ProgressDoaRepository");
 
 const getAllDoa = async () => {
   return await DoaRepository.getAllDoa();
@@ -11,6 +12,30 @@ const getDoaById = async (doaId) => {
   }
 
   return await DoaRepository.getDoaById(doaId);
+};
+
+const getStatusDoaByPerjalananId = async (perjalananId, progressId) => {
+  if (!perjalananId || !progressId) {
+    throw new Error("perjalananId and progressId are required");
+  }
+
+  const doaList = await DoaRepository.getStatusDoaByPerjalananId(perjalananId);
+
+  const progressDoaList = await ProgressDoaRepository.getProgressDoaByProgressId(progressId);
+
+  const progressMap = new Map();
+  progressDoaList.forEach((progress) => {
+    progressMap.set(progress.doaid, progress.durasi_doa);
+  });
+
+  const result = doaList.map((doa) => ({
+    doaid: doa.doaid,
+    judul_doa: doa.judul_doa,
+    perjalananid: doa.perjalananid,
+    durasi_doa: progressMap.get(doa.doaid) || "00:00",
+  }));
+
+  return result;
 };
 
 const getDoaByPerjalananId = async (perjalananId) => {
@@ -36,6 +61,7 @@ const deleteDoa = async (doaId) => {
 module.exports = {
   getAllDoa,
   getDoaById,
+  getStatusDoaByPerjalananId,
   getDoaByPerjalananId,
   createDoa,
   updateDoa,

@@ -39,6 +39,7 @@ CREATE TABLE `Progress` (
     `status` BOOLEAN NOT NULL,
     `is_finished` BOOLEAN NOT NULL DEFAULT false,
     `waktu_mulai` DATETIME(3) NULL,
+    `perjalananid` VARCHAR(36) NULL,
 
     PRIMARY KEY (`progressid`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -47,6 +48,7 @@ CREATE TABLE `Progress` (
 CREATE TABLE `Progress_perjalanan` (
     `progress_perjalananid` VARCHAR(36) NOT NULL,
     `progressid` VARCHAR(36) NOT NULL,
+    `grupid` VARCHAR(36) NULL,
     `userId` VARCHAR(36) NOT NULL,
     `perjalananid` VARCHAR(36) NOT NULL,
     `waktu_mulai` DATETIME(3) NOT NULL,
@@ -132,6 +134,7 @@ CREATE TABLE `UsersGoogle` (
 -- CreateTable
 CREATE TABLE `Doa` (
     `doaid` VARCHAR(36) NOT NULL,
+    `doa_urut` INTEGER NOT NULL,
     `judul_doa` VARCHAR(191) NOT NULL,
     `perjalananid` VARCHAR(191) NOT NULL,
     `link_audio` VARCHAR(255) NULL,
@@ -201,10 +204,16 @@ ALTER TABLE `Peserta_Grup` ADD CONSTRAINT `Peserta_Grup_roomid_fkey` FOREIGN KEY
 ALTER TABLE `Peserta_Grup` ADD CONSTRAINT `Peserta_Grup_usersGoogleId_fkey` FOREIGN KEY (`usersGoogleId`) REFERENCES `UsersGoogle`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Progress` ADD CONSTRAINT `Progress_perjalananid_fkey` FOREIGN KEY (`perjalananid`) REFERENCES `Perjalanan`(`perjalananid`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Progress` ADD CONSTRAINT `Progress_grupid_fkey` FOREIGN KEY (`grupid`) REFERENCES `Grup`(`grupid`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Progress_perjalanan` ADD CONSTRAINT `Progress_perjalanan_progressid_fkey` FOREIGN KEY (`progressid`) REFERENCES `Progress`(`progressid`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Progress_perjalanan` ADD CONSTRAINT `Progress_perjalanan_grupid_fkey` FOREIGN KEY (`grupid`) REFERENCES `Grup`(`grupid`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Progress_perjalanan` ADD CONSTRAINT `Progress_perjalanan_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

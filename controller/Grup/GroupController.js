@@ -22,7 +22,9 @@ const GrupController = {
         return res.status(404).json({ msg: "User not found" });
       }
       if (user.role !== "ustadz") {
-        return res.status(401).json({ msg: "Hanya ustadz/pembimbing yang bisa membuat grup" });
+        return res
+          .status(401)
+          .json({ msg: "Hanya ustadz/pembimbing yang bisa membuat grup" });
       }
 
       // Buat grup baru
@@ -84,7 +86,9 @@ const GrupController = {
         return res.status(404).json({ msg: "User not found" });
       }
       if (user.role !== "admin") {
-        return res.status(401).json({ msg: "Hanya admin yang bisa membuat grup tanpa batasan." });
+        return res
+          .status(401)
+          .json({ msg: "Hanya admin yang bisa membuat grup tanpa batasan." });
       }
 
       // Buat grup baru
@@ -100,9 +104,24 @@ const GrupController = {
 
       // Buat tiga data progress untuk grup baru
       const progressData = [
-        { grupid: newGrup.grupid, jenis_perjalanan: "Manasik", live: 0, status: false },
-        { grupid: newGrup.grupid, jenis_perjalanan: "Umroh", live: 0, status: false },
-        { grupid: newGrup.grupid, jenis_perjalanan: "Towaf Wada", live: 0, status: false },
+        {
+          grupid: newGrup.grupid,
+          jenis_perjalanan: "Manasik",
+          live: 0,
+          status: false,
+        },
+        {
+          grupid: newGrup.grupid,
+          jenis_perjalanan: "Umroh",
+          live: 0,
+          status: false,
+        },
+        {
+          grupid: newGrup.grupid,
+          jenis_perjalanan: "Towaf Wada",
+          live: 0,
+          status: false,
+        },
       ];
 
       await prisma.progress.createMany({ data: progressData });
@@ -167,14 +186,16 @@ const GrupController = {
       if (isUstadz) {
         res.json({
           status: "success",
-          message: "Anda berhasil join dan bisa mengakses fitur audio sebagai ustadz",
+          message:
+            "Anda berhasil join dan bisa mengakses fitur audio sebagai ustadz",
           roomStatus: "waiting room",
           audioControl: "enabled",
         });
       } else {
         res.json({
           status: "success",
-          message: "Anda berhasil join grup dan masuk ke waiting room. Anda bisa mendengarkan audio.",
+          message:
+            "Anda berhasil join grup dan masuk ke waiting room. Anda bisa mendengarkan audio.",
           roomStatus: "waiting room",
           audioControl: "listen-only",
         });
@@ -185,79 +206,112 @@ const GrupController = {
     }
   },
 
+  // exitGrup: async (req, res) => {
+  //   const { grupid } = req.body;
+  //   const { userId } = req.query;
+
+  //   try {
+  //     // Ambil token dari headers
+  //     const { token } = req.headers;
+  //     const responseJWT = jwt.verify(token, process.env.JWT_SECRET);
+
+  //     // Pastikan token valid dan memiliki informasi user yang sesuai
+  //     if (!responseJWT || responseJWT.user.id !== userId) {
+  //       return res.status(403).json({ status: "error", message: "Akses tidak diizinkan." });
+  //     }
+
+  //     // Cek apakah user tergabung dalam grup
+  //     const userInGroup = await prisma.peserta_Grup.findFirst({
+  //       where: {
+  //         grupid,
+  //         userId,
+  //       },
+  //     });
+
+  //     if (!userInGroup) {
+  //       return res.status(400).json({
+  //         status: "error",
+  //         message: "Anda belum tergabung dalam grup ini.",
+  //       });
+  //     }
+
+  //     // Hapus data terkait user dari tabel peserta_Grup
+  //     await prisma.peserta_Grup.delete({
+  //       where: { peserta_grupid: userInGroup.peserta_grupid },
+  //     });
+
+  //     // Hapus data progress grup jika tidak ada peserta yang tersisa
+  //     const remainingParticipants = await prisma.peserta_Grup.count({
+  //       where: { grupid },
+  //     });
+
+  //     if (remainingParticipants === 0) {
+  //       // Hapus progress yang terkait dengan grup
+  //       await prisma.progress.deleteMany({
+  //         where: { grupid },
+  //       });
+
+  //       // Hapus grup jika kosong
+  //       await prisma.grup.delete({
+  //         where: { grupid },
+  //       });
+  //     }
+
+  //     res.json({
+  //       status: "success",
+  //       message: "Anda telah keluar dari grup.",
+  //     });
+  //   } catch (err) {
+  //     console.error(err.message);
+  //     res.status(500).json({
+  //       status: "error",
+  //       message: "Terjadi kesalahan pada server.",
+  //     });
+  //   }
+  // },
+
   exitGrup: async (req, res) => {
     const { grupid } = req.body;
     const { userId } = req.query;
+    // Ambil token dari headers
+    const { token } = req.headers;
+    const responseJWT = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Pastikan token valid dan memiliki informasi user yang sesuai
+    if (!responseJWT || responseJWT.user.id !== userId) {
+      return res
+        .status(403)
+        .json({ status: "error", message: "Akses tidak diizinkan." });
+    }
 
     try {
-      // Ambil token dari headers
-      const { token } = req.headers;
-      const responseJWT = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Pastikan token valid dan memiliki informasi user yang sesuai
-      if (!responseJWT || responseJWT.user.id !== userId) {
-        return res.status(403).json({ status: "error", message: "Akses tidak diizinkan." });
-      }
-
       // Cek apakah user tergabung dalam grup
-      const userInGroup = await prisma.peserta_Grup.findFirst({
-        where: {
-          grupid,
-          userId,
-        },
+      const userInGroup = await prisma.peserta_Grup.findUnique({
+        where: { grupid_userId: { grupid, userId } },
       });
 
       if (!userInGroup) {
-        return res.status(400).json({
-          status: "error",
-          message: "Anda belum tergabung dalam grup ini.",
-        });
+        return res
+          .status(400)
+          .json({
+            status: "error",
+            message: "Anda belum tergabung dalam grup ini.",
+          });
       }
 
-      // Hapus data terkait user dari tabel peserta_Grup
+      // Hapus peserta dari grup
       await prisma.peserta_Grup.delete({
         where: { peserta_grupid: userInGroup.peserta_grupid },
       });
 
-      // Hapus data progress perjalanan jika ada yang terkait dengan user dan grup
-      await prisma.progress_perjalanan.deleteMany({
-        where: {
-          userId,
-          progress: {
-            grupid,
-          },
-        },
-      });
-
-      // Hapus data progress grup jika tidak ada peserta yang tersisa
-      const remainingParticipants = await prisma.peserta_Grup.count({
-        where: { grupid },
-      });
-
-      if (remainingParticipants === 0) {
-        await prisma.progress.deleteMany({
-          where: { grupid },
-        });
-
-        // Hapus grup jika kosong
-        await prisma.grup.delete({
-          where: { grupid },
-        });
-      }
-
-      res.json({
-        status: "success",
-        message: "Anda telah keluar dari grup dan data terkait telah dihapus.",
-      });
+      res.json({ status: "success", message: "Anda telah keluar dari grup." });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).json({
-        status: "error",
-        message: "Terjadi kesalahan pada server.",
-      });
+      console.error("Exit Grup Error:", err);
+      res
+        .status(500)
+        .json({ status: "error", message: "Terjadi kesalahan pada server." });
     }
   },
-
 
   getGrup: async (req, res) => {
     try {
@@ -265,6 +319,9 @@ const GrupController = {
         include: {
           room: true,
         },
+        orderBy: {
+          created_at: 'desc'
+        }
       });
       res.json(grupList);
     } catch (err) {
@@ -273,7 +330,7 @@ const GrupController = {
     }
   },
 
-  // Mengecek detail grup berdasarkan grupid dan menyertakan lebih banyak informasi 
+  // Mengecek detail grup berdasarkan grupid dan menyertakan lebih banyak informasi
   // yang lebih mendetail seperti participants, progress, dan room
   cekGrup: async (req, res) => {
     const { grupid } = req.params;
@@ -327,7 +384,9 @@ const GrupController = {
         },
       });
       if (!userInGroup) {
-        return res.status(404).json({ msg: "Pengguna tidak ditemukan dalam grup ini" });
+        return res
+          .status(404)
+          .json({ msg: "Pengguna tidak ditemukan dalam grup ini" });
       }
 
       res.json({ msg: "Pengguna ditemukan dalam grup", userInGroup });
@@ -350,7 +409,14 @@ const GrupController = {
             select: {
               id: true,
               name: true,
+              role: true,
               email: true,
+              whatsapp: true,
+              profile: {
+                select: {
+                  photo: true,
+                },
+              },
             },
           },
           online: true, // Tambahkan properti online jika ingin informasi ini juga
@@ -369,7 +435,10 @@ const GrupController = {
         data: grup.map((peserta) => ({
           userId: peserta.user.id,
           name: peserta.user.name,
+          role: peserta.user.role,
           email: peserta.user.email,
+          whatsapp: peserta.user.whatsapp,
+          profile: peserta.user.profile?.photo || null,
           online: peserta.online, // Jika informasi online diperlukan
         })),
       });
@@ -381,7 +450,6 @@ const GrupController = {
       });
     }
   },
-
 
   // Mengecek jumlah user yang online di grup
   cekLive: async (req, res) => {
@@ -395,7 +463,10 @@ const GrupController = {
         },
       });
 
-      res.json({ msg: `Jumlah user yang online dalam grup: ${liveUsers}`, liveUsers });
+      res.json({
+        msg: `Jumlah user yang online dalam grup: ${liveUsers}`,
+        liveUsers,
+      });
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server error");
@@ -403,17 +474,14 @@ const GrupController = {
   },
 
   deleteGrup: async (req, res) => {
-    const { grupid } = req.body; // Mengambil grupid dari parameter URL
-    const { userId } = req.query; // Mengambil userId dari query
+    const { grupid } = req.body;
 
     try {
       const { token } = req.headers;
       const responseJWT = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Cek apakah grup dengan grupid tersebut ada (hanya mendapatkan data grup)
-      const grup = await prisma.grup.findUnique({
-        where: { grupid },
-      });
+      // Cek apakah grup ada
+      const grup = await prisma.grup.findUnique({ where: { grupid } });
 
       if (!grup) {
         return res.status(404).json({ msg: "Grup tidak ditemukan." });
@@ -428,27 +496,30 @@ const GrupController = {
       const isUstadz = user.role === "ustadz";
       const isCreator = grup.created_by === user.id;
 
-      // Hanya pembuat grup atau ustadz yang boleh menghapus grup
       if (!isUstadz && !isCreator) {
-        return res.status(403).json({ msg: "Anda tidak memiliki hak untuk menghapus grup ini." });
+        return res
+          .status(403)
+          .json({ msg: "Anda tidak memiliki hak untuk menghapus grup ini." });
       }
 
-      // Hapus semua peserta yang tergabung dalam grup terlebih dahulu
-      await prisma.peserta_Grup.deleteMany({
-        where: { grupid },
+      // *Hapus data berelasi terlebih dahulu*
+      await prisma.progress_Doa.deleteMany({
+        where: { progress: { grupid } },
       });
 
-      // Hapus grupnya
-      await prisma.grup.delete({
-        where: { grupid },
-      });
+      await prisma.progress_perjalanan.deleteMany({ where: { grupid } });
+      await prisma.progress.deleteMany({ where: { grupid } });
+      await prisma.peserta_Grup.deleteMany({ where: { grupid } });
+
+      // *Hapus grup setelah semua data terkait dihapus*
+      await prisma.grup.delete({ where: { grupid } });
 
       res.json({
         status: "success",
-        message: "Grup dan semua peserta telah berhasil dihapus.",
+        message: "Grup dan semua data terkait telah berhasil dihapus.",
       });
     } catch (err) {
-      console.error(err.message);
+      console.error(err);
       res.status(500).send("Server error");
     }
   },
@@ -466,6 +537,7 @@ const GrupController = {
           live: true,
           status: true,
           is_finished: true,
+          perjalananid: true,
         },
       });
       if (liveProgress.length === 0) {
@@ -481,6 +553,7 @@ const GrupController = {
           live: progress.live,
           status: progress.status,
           is_finished: progress.is_finished,
+          perjalananid: progress.perjalananid,
         })),
       });
     } catch (err) {
@@ -491,7 +564,7 @@ const GrupController = {
 
   getStatusPerjalanan: async (req, res) => {
     const { grupid } = req.params; // Ambil grupid dari parameter URL
-  
+
     try {
       // Ambil data progress untuk grup tertentu
       const grupProgress = await prisma.progress.findMany({
@@ -508,7 +581,7 @@ const GrupController = {
           perjalananid: true,
         },
       });
-  
+
       // Jika tidak ada data progress untuk grup ini
       if (grupProgress.length === 0) {
         return res.status(404).json({
@@ -516,7 +589,7 @@ const GrupController = {
           message: "Tidak ada data progress yang ditemukan untuk grup ini.",
         });
       }
-  
+
       // Response dengan data progress untuk grup tertentu
       return res.status(200).json({
         status: true,
@@ -528,7 +601,7 @@ const GrupController = {
           live: progress.live,
           status: progress.status,
           is_finished: progress.is_finished,
-          perjalananid: progress.perjalananid, 
+          perjalananid: progress.perjalananid,
         })),
       });
     } catch (err) {
@@ -539,7 +612,6 @@ const GrupController = {
       });
     }
   },
-
 };
 
 module.exports = GrupController;
