@@ -27,6 +27,9 @@ Create a `.env` file in the root of your project and add the following environme
 DATABASE_URL="mysql://root:@localhost:3306/(databasename)
 JWT_SECRET=xxxxx
 ```
+Salin pengaturan lainnya dari web **100ms** dan tambahkan ke file **.env** sesuai kebutuhan.
+Generate HMS_ACCESS_ISS dari HMS_TEMPLATE_ID di web jwt.io.
+Setelah berhasil generate, salin nilai ISS dan tempelkan ke file .env.
 
 ## Database Setup
 3. **Install Prisma CLI**
@@ -56,6 +59,3 @@ npx prisma db seed
 ```
 npm run start:dev
 ```
-
-untuk HMS_ACCESS_ISS dari HMS_TEMPLATE_ID yang harus kita generate ke web jwt.io
-nanti ada ISS nya salin
