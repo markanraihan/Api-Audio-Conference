@@ -24,7 +24,7 @@ const getProfileByToken = async (req, res) => {
 const updateProfileByToken = async (req, res) => {
   try {
     const { name, whatsapp } = req.body;
-    const photo = req.file ? `/${req.file.filename}` : null;
+    const photo = req.file ? `/uploads/${req.file.filename}` : null; // Perubahan di sini
     const result = await ProfileServices.updateProfileByToken(req.user.id, { name, whatsapp, photo });
     res.status(result.status).json(result.data);
   } catch (err) {
