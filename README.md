@@ -40,15 +40,18 @@ Sesuaikan dengan settingan anda, untuk protokol SMTP (Simple Mail Transfer Proto
 ```
 npm install -g prisma
 ```
+
 4. **Generate Prisma Client**
 ```
 npx prisma generate
 ```
+
 5. **Run Database Migrations**
 ```
 npx prisma migrate dev --name init
 
 ```
+
 6. **Seed the Database (optional)**
 
 ```
