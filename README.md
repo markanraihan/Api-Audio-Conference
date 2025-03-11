@@ -21,7 +21,7 @@
 
 ## Environment Variables
 
-Create a `.env` file in the root of your project and add the following environment variables:
+Create a `.env` file in the root of your project and add the following environment variables like .env.example:
 
 ```env
 DATABASE_URL="mysql://root:@localhost:3306/(databasename)
