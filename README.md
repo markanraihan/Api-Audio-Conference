@@ -31,6 +31,9 @@ Salin pengaturan lainnya dari web **100ms** dan tambahkan ke file **.env** sesua
 Generate HMS_ACCESS_ISS dari HMS_TEMPLATE_ID di web jwt.io.
 Setelah berhasil generate, salin nilai ISS dan tempelkan ke file .env.
 
+SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS 
+Sesuaikan dengan settingan anda, untuk protokol SMTP (Simple Mail Transfer Protocol) untuk mengirim email.
+
 ## Database Setup
 3. **Install Prisma CLI**
 

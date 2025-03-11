@@ -1,10 +1,6 @@
 // AuthRepository.js
 const prisma = require ('../../utils/Prisma');
 
-// const verifyToken = async (token) => {
-
-// }
-
 class AuthRepository {
     async findByEmail(email) {
         return await prisma.users.findUnique({
@@ -56,7 +52,6 @@ class AuthRepository {
             },
         });
     }
-
 
 }
 

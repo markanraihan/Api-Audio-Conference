@@ -362,9 +362,9 @@ const GrupController = {
       const room = await prisma.grup.findUnique({
         where: { grupid },
         include: {
-            room: true,
+          room: true,
         },
-    });
+      });
 
       if (grup.length === 0) {
         return res.status(404).json({
