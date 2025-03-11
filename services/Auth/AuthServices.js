@@ -35,9 +35,9 @@ class AuthService {
         const ticket = await googleClient.verifyIdToken({
             idToken,
             audience: process.env.GOOGLE_CLIENT_ID,
-    });
+        });
 
-    return ticket.getPayload(); // Mengembalikan informasi user dari Google
+        return ticket.getPayload(); // Mengembalikan informasi user dari Google
     }
 
     async signInWithGoogle(idToken) {
@@ -73,6 +73,8 @@ class AuthService {
             });
         }
 
+        const grup = user.groups?.length ? await authRepository.findRoomByGrupId(user.groups[0].grupid) : null;
+
         // Generate JWT Token
         const token = jwt.sign(
             {
@@ -95,6 +97,7 @@ class AuthService {
             role: user.role,
             email: user.email,
             token,
+            room: grup?.roomid || null,
             groups: user.groups || [],
             photo: user.profile ? user.profile.photo : null,
         };

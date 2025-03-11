@@ -359,6 +359,13 @@ const GrupController = {
         },
       });
 
+      const room = await prisma.grup.findUnique({
+        where: { grupid },
+        include: {
+            room: true,
+        },
+    });
+
       if (grup.length === 0) {
         return res.status(404).json({
           status: "error",
@@ -368,6 +375,7 @@ const GrupController = {
 
       res.json({
         status: "success",
+        roomId: room.roomid,
         data: grup.map((peserta) => ({
           userId: peserta.user.id,
           name: peserta.user.name,

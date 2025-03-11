@@ -9,6 +9,9 @@ const { users } = require("../utils/Prisma");
 // generate Token
 router.post("/generateToken", AudioController.createRoom);
 
+// join via invite link
+router.post("/generateRoomCode", AudioController.createRoomCode);
+
 // get Room
 router.get("/getRoom", AudioController.getRoom);
 

@@ -69,20 +69,39 @@ const AuthController = {
         },
       });
 
+      const grup = user.groups?.length
+        ? await prisma.grup.findUnique({
+          where: { grupid: user.groups[0].grupid },
+          include: { room: true },
+        })
+        : null;
+
       // Jika user tidak ditemukan
       if (!user) {
-        return res.status(404).json({ errors: [{ msg: "User tidak ditemukan" }] });
+        return res
+          .status(404)
+          .json({ errors: [{ msg: "User tidak ditemukan" }] });
       }
 
       // Cek password terlebih dahulu
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ errors: [{ msg: "Email atau kata sandi salah" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "Email atau kata sandi salah" }] });
       }
 
       // Setelah password benar, cek apakah akun sudah diverifikasi
       if (!user.is_verified) {
-        return res.status(403).json({ errors: [{ msg: "Akun belum diverifikasi. Silakan verifikasi email anda terlebih dahulu" }] });
+        return res
+          .status(403)
+          .json({
+            errors: [
+              {
+                msg: "Akun belum diverifikasi. Silakan verifikasi email anda terlebih dahulu",
+              },
+            ],
+          });
       }
 
       // Generate token baru
@@ -118,6 +137,7 @@ const AuthController = {
             role: user.role,
             email: user.email,
             token,
+            room: grup?.roomid || null,
             groups: user.groups, // Sertakan grup dalam response
             photo: user.profile ? user.profile.photo : null,
           });

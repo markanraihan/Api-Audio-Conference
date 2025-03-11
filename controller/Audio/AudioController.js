@@ -128,6 +128,78 @@ const AudioController = {
     }
   },
 
+  createRoomCode: async (req, res) => {
+    try {
+      const { token } = req.headers;
+      const { roomid } = req.body;
+  
+      const responseJWT = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = responseJWT.user.id;
+  
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+          role: true,
+        },
+      });
+  
+      const role = user?.role;
+  
+      let roomCodeSpeaker = null;
+      let roomCodeListener = null;
+  
+      // Jika role speaker (ustadz)
+      if (role === "ustadz") {
+        const speakerResponse = await axios.post(
+          `https://api.100ms.live/v2/room-codes/room/${roomid}/role/speaker`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.HMS_API_KEY}`,
+            },
+          }
+        );
+        roomCodeSpeaker = speakerResponse.data.code;
+      }
+  
+      // Jika role listener
+      const listenerResponse = await axios.post(
+        `https://api.100ms.live/v2/room-codes/room/${roomid}/role/listener`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.HMS_API_KEY}`,
+          },
+        }
+      );
+      roomCodeListener = listenerResponse.data.code;
+  
+      const responseData = {
+        status: "success",
+        message: "Room Code created successfully",
+      };
+  
+      if (role === "ustadz") {
+        responseData.data = {
+          roomCodeSpeaker: roomCodeSpeaker,
+          roomSpeakerUrl: `https://${process.env.HMS_SUBDOMAIN}.app.100ms.live/meeting/${roomCodeSpeaker}`,
+          roomCodeListener: roomCodeListener,
+          roomListenerUrl: `https://${process.env.HMS_SUBDOMAIN}.app.100ms.live/meeting/${roomCodeListener}`,
+        };
+      } else {
+        responseData.data = {
+          roomCodeListener: roomCodeListener,
+          roomListenerUrl: `https://${process.env.HMS_SUBDOMAIN}.app.100ms.live/meeting/${roomCodeListener}`,
+        };
+      }
+  
+      return res.json(responseData);
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).json({ message: "Terjadi kesalahan di server" });
+    }
+  },
+
   getRoom: async (req, res) => {
     const { token } = req.headers;
 
@@ -177,6 +249,7 @@ const AudioController = {
       return res.status(500).json({ message: "Terjadi kesalahan di server" });
     }
   },
+
   refreshRoomToken: async (req, res) => {
     try {
       const { token } = req.headers;

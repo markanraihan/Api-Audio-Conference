@@ -16,6 +16,15 @@ class AuthRepository {
         });
     }
 
+    async findRoomByGrupId(grupid) {
+        return await prisma.grup.findUnique({
+            where: { grupid },
+            include: {
+                room: true,
+            },
+        });
+    }
+
     async updatePassword(userId, hashedPassword) {
         return await prisma.users.update({
             where: { id: userId },
@@ -47,6 +56,8 @@ class AuthRepository {
             },
         });
     }
+
+
 }
 
 module.exports = new AuthRepository();
