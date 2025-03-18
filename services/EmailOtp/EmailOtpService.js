@@ -20,7 +20,8 @@ const generateOTP = () => {
 
 const sendEmail = async (email, subject, otp) => {
     try {
-        const result = await findUserByEmail(email);
+        const result = await findUserByEmail(email, subject);
+
 
         if (result.error) {
             console.log(result.error);

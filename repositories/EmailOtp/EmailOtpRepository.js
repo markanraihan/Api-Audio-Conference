@@ -1,7 +1,7 @@
 // EmailOtpRepository.js
 const prisma = require("../../utils/Prisma");
 
-const findUserByEmail = async (email) => {
+const findUserByEmail = async (email, subject) => {
     const user = await prisma.users.findUnique({
         where: { email },
     });
@@ -10,8 +10,10 @@ const findUserByEmail = async (email) => {
         return { error: "Email tidak terdaftar" };
     }
 
-    if (user.password === null) {
-        return { error: "Silakan masuk menggunakan akun Google" };
+    if (subject != 'Delete Account OTP') {
+        if (user.password === null) {
+            return { error: "Silakan masuk menggunakan akun Google" };
+        }
     }
 
     return { user }; // Kembalikan user jika ditemukan dan memiliki password

@@ -174,7 +174,7 @@ model Progress_Doa {
 model Video {
   videoid    String   @id @default(uuid())
   judul_vid  String
-  deskripsi  String
+  deskripsi  String   @db.Text
   link_vid   String
   thumbnail  String
   created_at DateTime @default(now())
