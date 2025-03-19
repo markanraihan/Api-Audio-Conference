@@ -15,6 +15,37 @@ class AuthService {
         return await bcrypt.compare(password, hashedPassword);
     }
 
+    async createUserByAdmin({ name, email, password, whatsapp, role }) {
+        // Cek apakah email sudah ada
+        const existingUser = await authRepository.findByEmail(email);
+        if (existingUser) {
+            throw new Error("Akun sudah pernah didaftarkan");
+        }
+
+        // Hash password
+        const hashedPassword = await this.hashPassword(password);
+
+        // Buat pengguna baru
+        const newUser = await authRepository.createUser({
+            name,
+            email,
+            password: hashedPassword,
+            whatsapp,
+            role: role || "user", // Default role adalah 'user' jika tidak disediakan
+            is_verified: true, // Admin membuat akun, langsung diverifikasi
+        });
+
+        // Buat profil untuk pengguna baru
+        await authRepository.createUserProfile({
+            name: newUser.name, // Menyimpan nama pengguna
+            userId: newUser.id, // Menggunakan ID pengguna yang baru dibuat
+            photo: `https://api.dicebear.com/8.x/identicon/svg?seed=${newUser.name}`,
+            whatsapp: newUser.whatsapp, // Generasi URL foto
+        });
+
+        return { status: "success", message: "Pembuatan akun berhasil" };
+    }
+
     async resetPasswordByEmail(email, newPassword) {
         const user = await authRepository.findByEmail(email);
         if (!user) {

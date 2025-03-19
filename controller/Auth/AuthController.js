@@ -49,7 +49,32 @@ const AuthController = {
         },
       });
 
-      res.json({ status: "success", message: "Pembuatan akun berhasil" });
+      res.json({ status: "success", message: "Pembuatan akun anda berhasil" });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server error, harap mencoba beberapa saat lagi");
+    }
+  },
+
+  createUserByAdmin: async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { name, email, password, whatsapp, role } = req.body;
+
+    try {
+      // Panggil service untuk membuat user oleh admin
+      const result = await AuthServices.createUserByAdmin({
+        name,
+        email,
+        password,
+        whatsapp,
+        role,
+      });
+
+      res.json({ status: "success", message: "Pembuatan akun oleh admin berhasil" });
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server error, harap mencoba beberapa saat lagi");
