@@ -1,3 +1,4 @@
+// RiwayatRepository.js
 const prisma = require("../../utils/Prisma");
 
 const saveRiwayat = async (grupid, progressid) => {
@@ -246,5 +247,50 @@ const getRiwayatPerjalananDetailById = async (riwayatgrupid, perjalananid) => {
     });
 };
 
+const getAllRiwayatPerjalanan = async () => {
+    return await prisma.riwayatPerjalanan.findMany({
+        select: {
+            riwayatperjalananid: true,
+            riwayatgrupid: true,
+            perjalananid: true,
+            nama_perjalanan: true,
+            waktu_mulai: true,
+            time_selesai: true,
+            durasi_progress: true,
+            riwayatDoa: {
+                select: {
+                    riwayatdoaid: true,
+                    doaid: true,
+                    judul_doa: true,
+                    durasi_doa: true,
+                    cek_doa: true,
+                    doa: {
+                        select: {
+                            doa_urut: true
+                        }
+                    }
+                },
+                orderBy: {
+                    doa: {
+                        doa_urut: 'asc'
+                    }
+                }
+            },
+            riwayatGrup: {
+                select: {
+                    usersOnRiwayatGrup: {
+                        where: { role: "ustadz" },
+                        select: {
+                            userid: true,
+                            name: true,
+                            role: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
 
-module.exports = { saveRiwayat, getRiwayatGrupByUserId, getRiwayatPerjalananDetailById };
+
+module.exports = { saveRiwayat, getRiwayatGrupByUserId, getRiwayatPerjalananDetailById, getAllRiwayatPerjalanan };

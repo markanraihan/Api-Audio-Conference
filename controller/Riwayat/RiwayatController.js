@@ -1,3 +1,4 @@
+// RiwayatController.js
 const riwayatGrupService = require("../../services/Riwayat/RiwayatService");
 
 const getRiwayatGrupByUser = async (req, res) => {
@@ -28,4 +29,19 @@ const getRiwayatPerjalananDetail = async (req, res) => {
     }
 };
 
-module.exports = { getRiwayatGrupByUser, getRiwayatPerjalananDetail };
+const getAllRiwayatPerjalanan = async (req, res) => {
+    try {
+        const riwayatPerjalanan = await riwayatGrupService.getAllRiwayatPerjalanan();
+
+        if (!riwayatPerjalanan || riwayatPerjalanan.length === 0) {
+            return res.status(404).json({ success: false, message: "Tidak ada riwayat perjalanan yang ditemukan" });
+        }
+
+        res.json({ success: true, data: riwayatPerjalanan });
+    } catch (error) {
+        console.error("Error fetching all riwayat perjalanan:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+module.exports = { getRiwayatGrupByUser, getRiwayatPerjalananDetail, getAllRiwayatPerjalanan  };

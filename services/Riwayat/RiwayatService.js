@@ -1,3 +1,4 @@
+// RiwayatService.js
 const riwayatGrupRepository = require("../../repositories/Riwayat/RiwayatRepository");
 const jwt = require("jsonwebtoken");
 
@@ -11,4 +12,8 @@ const getRiwayatPerjalananDetail = async (riwayatgrupid, perjalananid) => {
     return await riwayatGrupRepository.getRiwayatPerjalananDetailById(riwayatgrupid, perjalananid);
 };
 
-module.exports = { getRiwayatGrupByUser, getRiwayatPerjalananDetail };
+const getAllRiwayatPerjalanan = async () => {
+    return await riwayatGrupRepository.getAllRiwayatPerjalanan();
+};
+
+module.exports = { getRiwayatGrupByUser, getRiwayatPerjalananDetail, getAllRiwayatPerjalanan };
