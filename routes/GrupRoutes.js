@@ -38,4 +38,7 @@ router.get('/getCekLive', GrupController.getCekLive)
 // Get Status Perjalanan semua grup
 router.get('/getStatusPerjalanan/:grupid', GrupController.getStatusPerjalanan);
 
+// Tambahkan member baru ke grup oleh admin
+router.post('/tambah-anggota', admin, GrupController.tambahAnggotaGrup);
+
 module.exports = router;

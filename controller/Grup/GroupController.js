@@ -556,6 +556,105 @@ const GrupController = {
       });
     }
   },
+
+  tambahAnggotaGrup: async (req, res) => {
+    const { grupid, userId } = req.body;
+
+    try {
+      // 1. Verifikasi Admin
+      const { token } = req.headers;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      const admin = await prisma.users.findUnique({
+        where: { id: decoded.user.id },
+        select: { role: true }
+      });
+
+      if (!admin || admin.role !== "admin") {
+        return res.status(403).json({
+          status: "error",
+          message: "Akses ditolak. Hanya admin yang boleh menambahkan anggota grup"
+        });
+      }
+
+      // 2. Validasi Grup
+      const grup = await prisma.grup.findUnique({
+        where: { grupid }
+      });
+
+      if (!grup) {
+        return res.status(404).json({
+          status: "error",
+          message: "Grup tidak ditemukan"
+        });
+      }
+
+      // 3. Validasi User
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        include: { profile: true }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          status: "error",
+          message: "User tidak ditemukan"
+        });
+      }
+
+      // 4. Cek Keanggotaan
+      const existingMember = await prisma.peserta_Grup.findUnique({
+        where: {
+          grupid_userId: { grupid, userId }
+        }
+      });
+
+      if (existingMember) {
+        return res.status(400).json({
+          status: "error",
+          message: "User sudah menjadi anggota grup ini"
+        });
+      }
+
+      // 5. Tambahkan User ke Grup
+      const anggotaBaru = await prisma.peserta_Grup.create({
+        data: {
+          grupid,
+          userId,
+          online: "offline"
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+              profile: {
+                select: {
+                  photo: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // 6. Response Sukses
+      return res.json({
+        status: "success",
+        message: `Berhasil menambahkan ${user.name} ke grup ${grup.nama_grup}`,
+        data: anggotaBaru
+      });
+
+    } catch (err) {
+      console.error("Error in tambahAnggotaGrup:", err);
+      return res.status(500).json({
+        status: "error",
+        message: "Terjadi kesalahan server",
+        error: err.message
+      });
+    }
+  },
 };
 
 module.exports = GrupController;
