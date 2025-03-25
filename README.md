@@ -5,7 +5,7 @@
 - [Environment Variables](#environment-variables)
 - [Database Setup](#database-setup)
 - [Running the Application](#running-the-application)
-
+- [Last Update](#last-update-documentation)
 
 ## Installation
 
@@ -35,6 +35,7 @@ SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
 Sesuaikan dengan settingan anda, untuk protokol SMTP (Simple Mail Transfer Protocol) untuk mengirim email.
 
 ## Database Setup
+
 3. **Install Prisma CLI**
 
 ```
@@ -65,3 +66,11 @@ npx prisma db seed
 ```
 npm run start:dev
 ```
+
+## Last Update Documentation
+
+Last update is:
+1. endpoint admin bisa menambahkan user ke grup
+2. endpoint admin bisa tracking perjalanan grup
+3. endpoint admin bikin akun user
+4. endpoint admin history perjalanan
