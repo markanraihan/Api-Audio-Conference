@@ -1,6 +1,6 @@
 // ProgressContreller.js
 const moment = require('moment-timezone'); // Import moment-timezone
-
+const prisma = require("../../utils/Prisma");
 const ProgressServices = require("../../services/Progress/ProgressServices");
 
 const createProgress = async (req, res) => {
@@ -134,6 +134,109 @@ const getAllGrupByToken = async (req, res) => {
   }
 };
 
+const trackLiveGroups = async (req, res) => {
+  try {
+    // 1. Verifikasi admin
+    const admin = await prisma.users.findUnique({
+      where: { id: req.user.id },
+      select: { role: true }
+    });
+
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ 
+        status: 'error',
+        message: 'Akses ditolak. Hanya admin yang bisa melihat tracking grup' 
+      });
+    }
+
+    // 2. Query data progress live dengan relasi lengkap
+    const liveGroups = await prisma.progress.findMany({
+      where: { live: 1 },
+      include: {
+        grup: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                role: true
+              }
+            }
+          }
+        },
+        perjalanan: {
+          select: {
+            perjalananid: true,
+            nama_perjalanan: true
+          }
+        },
+        progressDetails: {
+          include: {
+            user: {
+              include: {
+                profile: {
+                  select: {
+                    photo: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        waktu_mulai: 'asc' // Urutkan dari yang paling lama
+      }
+    });
+
+    // 3. Handle jika tidak ada data
+    if (liveGroups.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'Tidak ada grup yang sedang berjalan',
+        data: []
+      });
+    }
+
+    // 4. Format response sesuai contoh
+    const formattedResponse = liveGroups.map((progress) => ({
+      progress_id: progress.progressid,
+      jenis_perjalanan: progress.jenis_perjalanan,
+      waktu_mulai: moment(progress.waktu_mulai).tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss'),
+      grup: {
+        id: progress.grupid,
+        nama_grup: progress.grup.nama_grup,
+        pembimbing: progress.grup.user.name,
+        role_pembimbing: progress.grup.user.role,
+        dibuat_pada: moment(progress.grup.created_at).tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss')
+      },
+      perjalanan: {
+        id: progress.perjalanan.perjalananid,
+        nama: progress.perjalanan.nama_perjalanan
+      },
+      peserta: progress.progressDetails.map((detail) => ({
+        user_id: detail.userId,
+        nama: detail.user.name,
+        foto: detail.user.profile?.photo || null
+      }))
+    }));
+
+    // 5. Kirim response
+    return res.status(200).json({
+      status: 'success',
+      message: 'Data grup yang sedang berjalan ditemukan',
+      data: formattedResponse
+    });
+
+  } catch (err) {
+    console.error('Error in trackLiveGroups:', err);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Terjadi kesalahan server',
+      error: err.message
+    });
+  }
+};
+
 module.exports = {
   createProgress,
   getLiveProgress,
@@ -141,4 +244,5 @@ module.exports = {
   getUserProgressHistoryByToken,
   getAllGrupByUserId,
   getAllGrupByToken,
+  trackLiveGroups,
 };
